@@ -15,7 +15,7 @@ export const locationCodeSchema = z
   .int()
   .positive()
   .describe(
-    "DataForSEO location code. Defaults to the project's default market (see list_projects; editable in project settings). See dataforseo.com/help-center/locations. Some countries (e.g. Iceland, 2352) are served from Google Ads data: keyword volume/CPC/trends work, but keyword difficulty, search intent, and domain analytics are unavailable.",
+    "DataForSEO location code. Defaults to the project's default market (see list_projects; editable in project settings). Resolve an unknown city or local code with search_serp_locations. See dataforseo.com/help-center/locations. Some countries (e.g. Iceland, 2352) are served from Google Ads data: keyword volume/CPC/trends work, but keyword difficulty, search intent, and domain analytics are unavailable.",
   );
 
 export const languageCodeSchema = z

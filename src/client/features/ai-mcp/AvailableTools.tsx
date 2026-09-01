@@ -92,6 +92,11 @@ const toolCategories: ToolCategory[] = [
         description: "See live Google results for a keyword.",
       },
       {
+        name: "search_serp_locations",
+        title: "Search SERP locations",
+        description: "Resolve a place name to a DataForSEO location code.",
+      },
+      {
         name: "find_serp_competitors",
         title: "Find SERP competitors",
         description: "Compare domains across a keyword set.",
