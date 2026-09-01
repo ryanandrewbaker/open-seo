@@ -13,7 +13,10 @@ import {
 } from "@/server/mcp/schemas";
 
 type SerpItem = {
-  type?: string | null;
+  type: string | null;
+  rankGroup: number | null;
+  rankAbsolute: number | null;
+  /** Legacy combined field: rankAbsolute falling back to rankGroup. */
   rank: number | null;
   title: string | null;
   url: string | null;
@@ -22,7 +25,9 @@ type SerpItem = {
 };
 
 const SERP_ITEM_COLUMNS: McpTableColumn<SerpItem>[] = [
-  { header: "rank", value: (item) => item.rank },
+  { header: "type", value: (item) => item.type },
+  { header: "rank_group", value: (item) => item.rankGroup },
+  { header: "rank_absolute", value: (item) => item.rankAbsolute },
   { header: "domain", value: (item) => item.domain },
   { header: "title", value: (item) => item.title },
   { header: "url", value: (item) => item.url },
@@ -52,7 +57,7 @@ export const getSerpResultsTool = {
   config: {
     title: "Get Google SERP results",
     description:
-      "Fetch live Google organic search results for 1-10 keywords. Use this to inspect who ranks for a query, verify competitors, compare SERPs across keywords, or gather source URLs before content planning. Charges credits per keyword (~30-60 each). Does not save results to OpenSEO. Per-keyword errors don't fail the batch.",
+      "Fetch live Google SERP results for 1-10 keywords. Items include mixed SERP types (organic, local_pack, featured snippets, PAA, etc.) — inspect `type`. `rankGroup` is position among items of the same type; `rankAbsolute` is overall page position including SERP features. For city/local searches, resolve locationCode with search_serp_locations. Charges credits per keyword (~30-60 each). Does not save results to OpenSEO. Per-keyword errors don't fail the batch.",
     inputSchema,
     outputSchema: {
       results: z.array(
@@ -64,7 +69,9 @@ export const getSerpResultsTool = {
               items: z.array(
                 z
                   .object({
-                    type: z.string().nullable().optional(),
+                    type: z.string().nullable(),
+                    rankGroup: z.number().nullable(),
+                    rankAbsolute: z.number().nullable(),
                     rank: z.number().nullable(),
                     title: z.string().nullable(),
                     url: z.string().nullable(),
@@ -103,7 +110,9 @@ export const getSerpResultsTool = {
           });
           // Trim noise — return only essentials per item.
           const trimmed = items.slice(0, 20).map((item) => ({
-            type: item.type,
+            type: item.type ?? null,
+            rankGroup: item.rank_group ?? null,
+            rankAbsolute: item.rank_absolute ?? null,
             rank: item.rank_absolute ?? item.rank_group ?? null,
             title: item.title ?? null,
             url: item.url ?? null,
