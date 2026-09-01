@@ -382,9 +382,11 @@ describe("MCP tool text output (service-backed tools)", () => {
     );
 
     const out = textContent(result);
-    expect(out).toContain("rank | domain | title | url");
     expect(out).toContain(
-      "1 | example.com | Best SEO Tools | https://example.com/best",
+      "type | rank_group | rank_absolute | domain | title | url",
+    );
+    expect(out).toContain(
+      "organic | — | 1 | example.com | Best SEO Tools | https://example.com/best",
     );
   });
 });
