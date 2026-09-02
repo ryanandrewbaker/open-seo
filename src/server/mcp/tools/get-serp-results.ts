@@ -9,6 +9,7 @@ import { formatMcpTable, type McpTableColumn } from "@/server/mcp/table";
 import {
   languageCodeSchema,
   locationCodeSchema,
+  locationNameSchema,
   projectIdSchema,
 } from "@/server/mcp/schemas";
 
@@ -37,6 +38,7 @@ const querySchema = z.object({
   keyword: z.string().min(1).describe("Search query to fetch the SERP for."),
   locationCode: locationCodeSchema.optional(),
   languageCode: languageCodeSchema.optional(),
+  locationName: locationNameSchema.optional(),
 });
 
 const inputSchema = {
@@ -57,7 +59,7 @@ export const getSerpResultsTool = {
   config: {
     title: "Get Google SERP results",
     description:
-      "Fetch live Google SERP results for 1-10 keywords. Items include mixed SERP types (organic, local_pack, featured snippets, PAA, etc.) — inspect `type`. `rankGroup` is position among items of the same type; `rankAbsolute` is overall page position including SERP features. For city/local searches, resolve locationCode with search_serp_locations. Charges credits per keyword (~30-60 each). Does not save results to OpenSEO. Per-keyword errors don't fail the batch.",
+      "Fetch live Google SERP results for 1-10 keywords. Items include mixed SERP types (organic, local_pack, featured snippets, PAA, etc.) — inspect `type`. `rankGroup` is position among items of the same type; `rankAbsolute` is overall page position including SERP features. For city/local searches, resolve locationName with search_serp_locations and keep the country locationCode. Charges credits per keyword (~30-60 each). Does not save results to OpenSEO. Per-keyword errors don't fail the batch.",
     inputSchema,
     outputSchema: {
       results: z.array(

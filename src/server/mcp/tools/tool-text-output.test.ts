@@ -130,6 +130,43 @@ describe("MCP tool text output (service-backed tools)", () => {
     expect(out).toContain("free seo tools | 880 | — | — | — | informational");
   });
 
+  it("research_keywords forwards locationName into keyword research", async () => {
+    mocks.getProjectForOrganization.mockResolvedValue({
+      id: "project_1",
+      locationCode: 2036,
+      languageCode: "en",
+    });
+    mocks.research.mockResolvedValue({
+      rows: [],
+      source: "related",
+      usedFallback: false,
+    });
+
+    await researchKeywordsTool.handler(
+      {
+        projectId: "project_1",
+        seeds: [
+          {
+            seed: "newborn photographer",
+            locationCode: 2036,
+            locationName: "Ararat,Victoria,Australia",
+          },
+        ],
+      },
+      toolContext,
+    );
+
+    expect(mocks.research).toHaveBeenCalledWith(
+      expect.objectContaining({
+        keywords: ["newborn photographer"],
+        locationCode: 2036,
+        languageCode: "en",
+        locationName: "Ararat,Victoria,Australia",
+      }),
+      expect.anything(),
+    );
+  });
+
   it("get_domain_keyword_suggestions renders keyword rows", async () => {
     mocks.getSuggestedKeywords.mockResolvedValue([
       {

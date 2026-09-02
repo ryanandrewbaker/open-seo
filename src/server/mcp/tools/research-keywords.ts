@@ -13,6 +13,7 @@ import { assertLanguageForLocation } from "@/server/lib/market";
 import {
   languageCodeSchema,
   locationCodeSchema,
+  locationNameSchema,
   projectIdSchema,
 } from "@/server/mcp/schemas";
 
@@ -20,6 +21,7 @@ const seedSchema = z.object({
   seed: z.string().min(1).describe("Seed keyword to research."),
   locationCode: locationCodeSchema.optional(),
   languageCode: languageCodeSchema.optional(),
+  locationName: locationNameSchema.optional(),
 });
 
 const inputSchema = {
@@ -71,7 +73,7 @@ export const researchKeywordsTool = {
   config: {
     title: "Research keywords (bulk)",
     description:
-      "Research keyword data (search volume, difficulty, CPC, related ideas) for 1-5 seed keywords in one call. Charges credits per seed (~30-100 credits each, varies by source; flat ~96 for countries served from Google Ads data, where difficulty/intent are unavailable). Returns per-seed results — a single bad seed won't fail the batch.",
+      "Research keyword data (search volume, difficulty, CPC, related ideas) for 1-5 seed keywords in one call. Discovery uses the country market (locationCode). Pass locationName from search_serp_locations to overlay city-level Google Ads volume/CPC without replacing the country. Charges credits per seed (~30-100 credits each, varies by source; local overlay adds a Google Ads volume call; flat ~96 for countries served from Google Ads data, where difficulty/intent are unavailable). Returns per-seed results — a single bad seed won't fail the batch.",
     inputSchema,
     outputSchema: {
       results: z.array(
@@ -107,17 +109,15 @@ export const researchKeywordsTool = {
     const results = await Promise.all(
       args.seeds.map(async (item) => {
         try {
-          const { locationCode, languageCode } = resolveMarket(
-            item,
-            context.project,
-          );
-          assertLanguageForLocation(locationCode, languageCode);
+          const market = resolveMarket(item, context.project);
+          assertLanguageForLocation(market.locationCode, market.languageCode);
           const data = await KeywordResearchService.research(
             {
               projectId: args.projectId,
               keywords: [item.seed],
-              locationCode,
-              languageCode,
+              locationCode: market.locationCode,
+              languageCode: market.languageCode,
+              locationName: market.locationName,
               resultLimit: args.resultLimit ?? 150,
               mode: "auto",
               clickstream: args.includeClickstreamData ?? false,
@@ -146,18 +146,18 @@ export const researchKeywordsTool = {
     const failCount = results.length - okCount;
     const text =
       results
-        .map((r) => {
+        .map((r, index) => {
           if (!r.ok) {
             return `## "${r.seed}" — FAILED\n${r.error}`;
           }
-          const header = `## "${r.seed}" — ${r.rowCount} keywords (source: ${r.source}${r.usedFallback ? ", fallback" : ""})`;
+          const header = `## "${r.seed}" — ${r.rowCount} keywords (source: ${r.source}${r.usedFallback ? ", fallback" : ""}${args.seeds[index]?.locationName ? ", local volume" : ""})`;
           if (r.rowCount === 0) {
             return `${header}\n(no keywords returned)`;
           }
           return `${header}\n${formatMcpTable(r.rows, RESEARCH_COLUMNS)}`;
         })
         .join("\n\n") +
-      `\n\nResearched ${okCount} of ${results.length} seeds${failCount > 0 ? ` (${failCount} failed)` : ""}. Columns: volume = monthly searches, KD = keyword difficulty (0-100), CPC in USD, competition = paid competition (0-1); "—" = unavailable.`;
+      `\n\nResearched ${okCount} of ${results.length} seeds${failCount > 0 ? ` (${failCount} failed)` : ""}. Columns: volume = monthly searches, KD = keyword difficulty (0-100), CPC in USD, competition = paid competition (0-1); "—" = unavailable.${args.seeds.some((seed) => seed.locationName) ? " Volume/CPC are city-scoped when locationName is set; KD/intent stay country-level." : ""}`;
 
     return mcpResponse({
       text,

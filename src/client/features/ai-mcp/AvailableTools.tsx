@@ -94,7 +94,7 @@ const toolCategories: ToolCategory[] = [
       {
         name: "search_serp_locations",
         title: "Search SERP locations",
-        description: "Resolve a place name to a DataForSEO location code.",
+        description: "Resolve a place name to a canonical DataForSEO location.",
       },
       {
         name: "find_serp_competitors",

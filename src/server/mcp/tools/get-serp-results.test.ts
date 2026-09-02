@@ -159,4 +159,35 @@ describe("get_serp_results MCP evidence", () => {
     const [item] = okItems(result);
     expect(item).toMatchObject({ type: null, rankGroup: 1, rankAbsolute: 1 });
   });
+
+  it("passes a canonical locationName through to live SERP without replacing the country", async () => {
+    const live = vi.fn().mockResolvedValue([]);
+    mocks.createDataforseoClient.mockReturnValue({ serp: { live } });
+    mocks.getProjectForOrganization.mockResolvedValue({
+      id: "project_1",
+      locationCode: 2036,
+      languageCode: "en",
+    });
+
+    await getSerpResultsTool.handler(
+      {
+        projectId: "project_1",
+        queries: [
+          {
+            keyword: "newborn photographer",
+            locationCode: 2036,
+            locationName: "Ararat,Victoria,Australia",
+          },
+        ],
+      },
+      toolContext,
+    );
+
+    expect(live).toHaveBeenCalledWith({
+      keyword: "newborn photographer",
+      locationCode: 2036,
+      languageCode: "en",
+      locationName: "Ararat,Victoria,Australia",
+    });
+  });
 });

@@ -44,7 +44,7 @@ export const searchSerpLocationsTool = {
   config: {
     title: "Search SERP locations",
     description:
-      "Search DataForSEO Google SERP locations by place name and ISO country code. Use this before supplying a local locationCode to SERP or keyword tools when the numeric code is not already verified. Returns up to 10 matches. Uses no credits — the location list is cached.",
+      "Search DataForSEO Google SERP locations by place name and ISO country code. Use this before supplying locationName to research_keywords, get_keyword_metrics, or get_serp_results when the canonical name is not already verified. Returns up to 10 matches. Uses no credits — the location list is cached.",
     inputSchema,
     outputSchema: {
       locations: z.array(locationOutputSchema),
