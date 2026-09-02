@@ -136,6 +136,65 @@ describe("resolveMarket", () => {
       resolveMarket({ locationCode: 2276, languageCode: "en" }, vietnamProject),
     ).toEqual({ locationCode: 2276, languageCode: "en" });
   });
+
+  it("keeps the country locationCode when an explicit local target is set", () => {
+    expect(
+      resolveMarket(
+        {
+          locationCode: 2036,
+          languageCode: "en",
+          locationName: "Ararat,Victoria,Australia",
+        },
+        { locationCode: 2036, languageCode: "en" },
+      ),
+    ).toEqual({
+      locationCode: 2036,
+      languageCode: "en",
+      locationName: "Ararat,Victoria,Australia",
+    });
+  });
+
+  it("inherits a project local target when the request omits locationName", () => {
+    expect(
+      resolveMarket(
+        { locationCode: 2036, languageCode: "en" },
+        {
+          locationCode: 2036,
+          languageCode: "en",
+          locationName: "Ararat,Victoria,Australia",
+        },
+      ),
+    ).toEqual({
+      locationCode: 2036,
+      languageCode: "en",
+      locationName: "Ararat,Victoria,Australia",
+    });
+  });
+
+  it("clears an inherited local target when the request sends a blank locationName", () => {
+    const project = {
+      locationCode: 2036,
+      languageCode: "en",
+      locationName: "Ararat,Victoria,Australia",
+    };
+    expect(resolveMarket({ locationName: "" }, project)).toEqual({
+      locationCode: 2036,
+      languageCode: "en",
+    });
+    expect(resolveMarket({ locationName: null }, project)).toEqual({
+      locationCode: 2036,
+      languageCode: "en",
+    });
+  });
+
+  it("leaves country-only requests without a locationName field", () => {
+    expect(
+      resolveMarket(
+        { locationCode: 2036, languageCode: "en" },
+        { locationCode: 2840, languageCode: "en" },
+      ),
+    ).toEqual({ locationCode: 2036, languageCode: "en" });
+  });
 });
 
 describe("resolveLabsMarket", () => {
@@ -168,6 +227,19 @@ describe("resolveLabsMarket", () => {
         { locationCode: 2704, languageCode: "vi" },
       ),
     ).toMatchObject({ locationCode: 2352 });
+  });
+
+  it("does not inherit a city name when falling back from an Ads-only project", () => {
+    expect(
+      resolveLabsMarket(
+        {},
+        {
+          locationCode: 2352,
+          languageCode: "en",
+          locationName: "Reykjavik,Capital Region,Iceland",
+        },
+      ),
+    ).toEqual({ locationCode: 2840, languageCode: "en" });
   });
 });
 
