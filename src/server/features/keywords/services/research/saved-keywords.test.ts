@@ -81,6 +81,38 @@ describe("saved keyword service", () => {
     expect(mocks.addTagsToSavedKeywords).not.toHaveBeenCalled();
   });
 
+  it("does not upsert country-keyed metrics when saving a local-targeted result", async () => {
+    mocks.saveKeywordsToProject.mockResolvedValue([savedKeywordRow]);
+    const { saveKeywords } = await import("./saved-keywords");
+
+    await saveKeywords({
+      projectId: "project_1",
+      keywords: ["technical seo"],
+      locationCode: 2036,
+      languageCode: "en",
+      locationName: "Ararat,Victoria,Australia",
+      metrics: [
+        {
+          keyword: "technical seo",
+          searchVolume: 40,
+          cpc: 1.2,
+          competition: 0.1,
+          keywordDifficulty: 18,
+          intent: "informational",
+          monthlySearches: [],
+        },
+      ],
+    });
+
+    expect(mocks.upsertKeywordMetric).not.toHaveBeenCalled();
+    expect(mocks.saveKeywordsToProject).toHaveBeenCalledWith({
+      projectId: "project_1",
+      keywords: ["technical seo"],
+      locationCode: 2036,
+      languageCode: "en",
+    });
+  });
+
   it("maps paged saved keyword rows with attached tags", async () => {
     mocks.listSavedKeywordsByProject.mockResolvedValue({
       totalCount: 1,

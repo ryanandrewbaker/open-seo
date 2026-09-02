@@ -32,6 +32,7 @@ export type KeywordResearchControllerInput = {
   projectId: string;
   keywordInput: string;
   locationCode: number | undefined;
+  locationName?: string;
   displayedLocationCode: number;
   setPreferredLocationCode: (locationCode: number) => void;
   resultLimit: ResultLimit;
@@ -50,8 +51,12 @@ export type KeywordResearchControllerInput = {
 export function useKeywordResearchController(
   input: KeywordResearchControllerInput,
 ) {
-  const { displayedLocationCode, locationCode, setPreferredLocationCode } =
-    input;
+  const {
+    displayedLocationCode,
+    locationCode,
+    locationName,
+    setPreferredLocationCode,
+  } = input;
   const {
     filtersForm,
     values: filterValues,
@@ -77,7 +82,7 @@ export function useKeywordResearchController(
     activeSerpKeyword,
     serpLoading,
     serpError,
-  } = useKeywordSerpAnalysis(input.projectId, locationCode);
+  } = useKeywordSerpAnalysis(input.projectId, locationCode, locationName);
 
   const {
     history,
@@ -94,6 +99,7 @@ export function useKeywordResearchController(
     lastUsedFallback,
     lastSearchKeyword,
     lastSearchLocationCode,
+    lastSearchLocationName,
     researchError,
     researchMutationError,
     researchQuery,
@@ -105,6 +111,7 @@ export function useKeywordResearchController(
       projectId: input.projectId,
       keywordInput: input.keywordInput,
       locationCode,
+      locationName,
       displayedLocationCode,
       resultLimit: input.resultLimit,
       mode: input.keywordMode,
@@ -119,6 +126,7 @@ export function useKeywordResearchController(
     ? buildKeywordSearchKey({
         keyword: input.keywordInput,
         locationCode,
+        locationName,
         resultLimit: input.resultLimit,
         mode: input.keywordMode,
         clickstream: input.clickstream,
@@ -252,6 +260,7 @@ export function useKeywordResearchController(
     lastSearchError,
     lastSearchKeyword,
     lastSearchLocationCode,
+    lastSearchLocationName,
     lastUsedFallback,
     mobileTab: uiState.mobileTab,
     overviewKeyword,

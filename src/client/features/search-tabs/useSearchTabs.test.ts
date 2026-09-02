@@ -143,9 +143,34 @@ describe("parseStoredState", () => {
       type: "keyword",
       keyword: "seo tools",
       locationCode: undefined,
+      locationName: undefined,
       resultLimit: 150,
       mode: "auto",
       clickstream: false,
+    });
+  });
+
+  it("keeps keyword tabs persisted with a canonical local target", () => {
+    const state = parseStoredState({
+      activeTabId: "tab-1",
+      tabs: [
+        persistedTab({
+          type: "keyword",
+          keyword: "newborn photographer",
+          locationCode: 2036,
+          locationName: "Ararat,Victoria,Australia",
+          resultLimit: 150,
+          mode: "auto",
+          clickstream: false,
+        }),
+      ],
+    });
+
+    expect(state.tabs[0].input).toMatchObject({
+      type: "keyword",
+      keyword: "newborn photographer",
+      locationCode: 2036,
+      locationName: "Ararat,Victoria,Australia",
     });
   });
 

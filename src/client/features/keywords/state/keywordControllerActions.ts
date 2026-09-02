@@ -62,6 +62,7 @@ export function parseKeywordInput(value: string) {
 export function buildKeywordSearchKey(params: {
   keyword: string;
   locationCode: number | undefined;
+  locationName?: string;
   resultLimit: ResultLimit;
   mode: KeywordMode;
   clickstream: boolean;
@@ -69,6 +70,7 @@ export function buildKeywordSearchKey(params: {
   return [
     parseKeywordInput(params.keyword).join(""),
     params.locationCode,
+    params.locationName ?? "",
     params.resultLimit,
     params.mode,
     params.clickstream ? "cs" : "",
@@ -126,6 +128,7 @@ export function useSaveAndExportActions(params: SaveExportActionParams) {
         projectId: input.projectId,
         keywords: [...selectedRows],
         locationCode: input.locationCode,
+        locationName: input.locationName,
         metrics,
       },
       {

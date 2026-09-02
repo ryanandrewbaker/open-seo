@@ -31,6 +31,7 @@ function KeywordResearchPageRoute() {
   const {
     q: keywordInput = "",
     loc: locationCode,
+    locName: locationName,
     kLimit: resultLimit = 150,
     mode: keywordMode = "auto",
     sort: sortField = "searchVolume",
@@ -41,6 +42,7 @@ function KeywordResearchPageRoute() {
       projectId={projectId}
       keywordInput={keywordInput}
       locationCode={locationCode}
+      locationName={locationName}
       resultLimit={isResultLimit(resultLimit) ? resultLimit : 150}
       keywordMode={normalizeKeywordMode(keywordMode)}
       clickstream={search.cs ?? false}

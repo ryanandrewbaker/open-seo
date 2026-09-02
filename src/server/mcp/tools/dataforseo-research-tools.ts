@@ -35,6 +35,7 @@ import {
   DEFAULT_LOCATION_CODE,
   languageCodeSchema,
   locationCodeSchema,
+  locationNameSchema,
   projectIdSchema,
 } from "@/server/mcp/schemas";
 import { assertFilterConditionBudget } from "@/server/lib/dataforseo/filters";
@@ -380,6 +381,7 @@ const getKeywordMetricsInputSchema = {
     .describe("Keywords to fetch metrics for (1-700)."),
   locationCode: locationCodeSchema.optional(),
   languageCode: languageCodeSchema.optional(),
+  locationName: locationNameSchema.optional(),
   includeMonthlyTrends: z
     .boolean()
     .optional()
@@ -1059,7 +1061,7 @@ export const getKeywordMetricsTool = {
   config: {
     title: "Get keyword metrics",
     description:
-      "Hydrate up to 700 known keywords with search volume, keyword difficulty (KD), search intent, CPC, competition, and monthly trends in a single call. Use it to score candidate or known keywords — including Search Console striking-distance queries — by real demand and ranking difficulty. For countries served from Google Ads data (e.g. Iceland), KD and intent are null. Charges credits.",
+      "Hydrate up to 700 known keywords with search volume, keyword difficulty (KD), search intent, CPC, competition, and monthly trends in a single call. Pass locationName from search_serp_locations for city-level Google Ads volume; KD/intent stay country-level. Use it to score candidate or known keywords — including Search Console striking-distance queries — by real demand and ranking difficulty. For countries served from Google Ads data (e.g. Iceland), KD and intent are null. Charges credits.",
     inputSchema: getKeywordMetricsInputSchema,
     outputSchema: {
       keywords: z.array(looseObjectOutputSchema),
@@ -1072,20 +1074,25 @@ export const getKeywordMetricsTool = {
     },
   },
   handler: withMcpProjectAuth(async (args: GetKeywordMetricsArgs, context) => {
-    const { locationCode, languageCode } = resolveMarket(args, context.project);
+    const market = resolveMarket(args, context.project);
     // Assert against the RESOLVED pair: an explicit language with an omitted
     // location must validate against the project's default location.
-    assertLanguageForLocation(locationCode, languageCode);
+    assertLanguageForLocation(market.locationCode, market.languageCode);
     const client = createDataforseoClient(context.billing);
     const metrics = await fetchKeywordMetricsForList(client, {
       keywords: args.keywords,
-      locationCode,
-      languageCode,
+      locationCode: market.locationCode,
+      languageCode: market.languageCode,
+      locationName: market.locationName,
       includeClickstreamData: args.includeClickstreamData ?? false,
       creditFeature: "keyword_research",
     });
+    const volumeScope = market.locationName ? "local" : "national";
     const rows = sortKeywordMetricRows(
-      metrics.map(toMcpKeywordMetricRow),
+      metrics.map((row) => ({
+        ...toMcpKeywordMetricRow(row),
+        volume_scope: volumeScope,
+      })),
       args.sortBy ?? "search_volume",
     ).map((row) =>
       args.includeMonthlyTrends === false
@@ -1095,7 +1102,7 @@ export const getKeywordMetricsTool = {
         : row,
     );
 
-    const header = `Fetched metrics for ${rows.length} keywords. Columns: volume = monthly searches, KD = keyword difficulty (0-100), CPC in USD, competition = paid competition (0-1); "—" = unavailable.`;
+    const header = `Fetched metrics for ${rows.length} keywords (${volumeScope} volume). Columns: volume = monthly searches, KD = keyword difficulty (0-100), CPC in USD, competition = paid competition (0-1); "—" = unavailable.`;
     return mcpResponse({
       text:
         rows.length === 0

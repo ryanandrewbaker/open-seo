@@ -705,25 +705,64 @@ export function getLanguageCode(locationCode: number): string {
   return LOCATION_LANGUAGE[locationCode] ?? "en";
 }
 
+type MarketArgs = {
+  locationCode?: number;
+  languageCode?: string;
+  /** Canonical DataForSEO location_name. Empty/null clears an inherited local target. */
+  locationName?: string | null;
+};
+
+type ProjectMarketInput = {
+  locationCode: number;
+  languageCode: string;
+  locationName?: string | null;
+};
+
+export type ResolvedMarket = {
+  locationCode: number;
+  languageCode: string;
+  locationName?: string;
+};
+
+/** Trim a canonical DataForSEO location_name; blank values become undefined. */
+function normalizeLocationName(
+  locationName: string | null | undefined,
+): string | undefined {
+  if (typeof locationName !== "string") return undefined;
+  const trimmed = locationName.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
 /**
- * Resolves a request's market against the project's default. The pair is
- * resolved together: overriding only the location snaps the language to that
+ * Resolves a request's market against the project's default. The country pair
+ * is resolved together: overriding only the location snaps the language to that
  * location's default language, because the project's language was chosen for
  * the project's own location and may not be valid — or sensible — for the
  * override (e.g. a Vietnam project querying Germany must not default to
  * Vietnamese).
+ *
+ * Optional local targeting is a separate field (`locationName`) and never
+ * replaces the country `locationCode`. Precedence: explicit request local
+ * target (including a blank value that clears), then project local target if
+ * present, else country-only.
  */
 export function resolveMarket(
-  args: { locationCode?: number; languageCode?: string },
-  project: { locationCode: number; languageCode: string },
-): { locationCode: number; languageCode: string } {
+  args: MarketArgs,
+  project: ProjectMarketInput,
+): ResolvedMarket {
   const locationCode = args.locationCode ?? project.locationCode;
   const languageCode =
     args.languageCode ??
     (locationCode === project.locationCode
       ? project.languageCode
       : getLanguageCode(locationCode));
-  return { locationCode, languageCode };
+  const locationName =
+    args.locationName !== undefined
+      ? normalizeLocationName(args.locationName)
+      : normalizeLocationName(project.locationName);
+  return locationName
+    ? { locationCode, languageCode, locationName }
+    : { locationCode, languageCode };
 }
 
 /**
@@ -750,9 +789,9 @@ export function isLanguageServedForLocation(
  * names an unserved country still fails loudly on its own assert.
  */
 export function resolveLabsMarket(
-  args: { locationCode?: number; languageCode?: string },
-  project: { locationCode: number; languageCode: string },
-): { locationCode: number; languageCode: string } {
+  args: MarketArgs,
+  project: ProjectMarketInput,
+): ResolvedMarket {
   const projectIsServed =
     getKeywordDataProvider(project.locationCode) === "labs" &&
     isLanguageServedForLocation(project.locationCode, project.languageCode);

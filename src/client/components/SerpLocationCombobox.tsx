@@ -28,7 +28,7 @@ export function SerpLocationCombobox({
   placeholder = "Search cities...",
 }: Props) {
   const [inputValue, setInputValue] = useState(
-    value ? formatLocationLabel(value) : "",
+    value ? formatLocationLabel(value, 2) : "",
   );
   const [results, setResults] = useState<SerpLocationResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -117,7 +117,7 @@ export function SerpLocationCombobox({
   const select = (loc: SerpLocationResult) => {
     onChange(loc.locationName);
     skipNextFetchRef.current = true;
-    setInputValue(loc.displayLabel);
+    setInputValue(formatLocationLabel(loc.locationName, 2));
     setResults([]);
     setOpen(false);
   };

@@ -61,6 +61,7 @@ async function getSerpLiveAnalysis(
     keyword: string;
     locationCode: number;
     languageCode: string;
+    locationName?: string;
   },
   billingCustomer: BillingCustomerContext,
 ): Promise<SerpAnalysisResult> {
@@ -72,6 +73,7 @@ async function getSerpLiveAnalysis(
     keyword,
     locationCode: input.locationCode,
     languageCode: input.languageCode,
+    locationName: input.locationName ?? null,
   });
 
   const cachedRaw = await getCached(cacheKey);
@@ -84,6 +86,7 @@ async function getSerpLiveAnalysis(
     keyword,
     locationCode: input.locationCode,
     languageCode: input.languageCode,
+    locationName: input.locationName,
   });
 
   const items = mapOrganicSerpItems(liveItems);

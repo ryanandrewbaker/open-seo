@@ -29,8 +29,11 @@ import type { KeywordResearchControllerState } from "./types";
 type ControllerProps = Omit<KeywordResearchControllerInput, "onFormSubmit">;
 type Props = Omit<
   ControllerProps,
-  "locationCode" | "displayedLocationCode" | "setPreferredLocationCode"
-> & { locationCode?: number };
+  | "locationCode"
+  | "locationName"
+  | "displayedLocationCode"
+  | "setPreferredLocationCode"
+> & { locationCode?: number; locationName?: string };
 type KeywordSearchTab = SearchTab & { input: KeywordSearchTabInput };
 
 function isKeywordSearchTab(tab: SearchTab): tab is KeywordSearchTab {
@@ -52,6 +55,7 @@ export function KeywordResearchPage(input: Props) {
         setSearchParams({
           q: undefined,
           loc: undefined,
+          locName: undefined,
           kLimit: undefined,
           mode: undefined,
           cs: undefined,
@@ -62,6 +66,7 @@ export function KeywordResearchPage(input: Props) {
       setSearchParams({
         q: tabInput.keyword,
         loc: tabInput.locationCode,
+        locName: tabInput.locationName,
         kLimit: tabInput.resultLimit === 150 ? undefined : tabInput.resultLimit,
         mode: tabInput.mode === "auto" ? undefined : tabInput.mode,
         cs: tabInput.clickstream ? true : undefined,
@@ -78,6 +83,7 @@ export function KeywordResearchPage(input: Props) {
       type: "keyword",
       keyword,
       locationCode,
+      locationName: input.locationName,
       resultLimit: input.resultLimit,
       mode: input.keywordMode,
       clickstream: input.clickstream,
@@ -86,6 +92,7 @@ export function KeywordResearchPage(input: Props) {
     input.clickstream,
     input.keywordInput,
     input.keywordMode,
+    input.locationName,
     locationCode,
     input.resultLimit,
   ]);
@@ -127,6 +134,7 @@ export function KeywordResearchPage(input: Props) {
         type: "keyword",
         keyword,
         locationCode: value.locationCode,
+        locationName: value.locationName,
         resultLimit: value.resultLimit,
         mode: value.mode,
         clickstream: value.clickstream,
@@ -150,6 +158,7 @@ export function KeywordResearchPage(input: Props) {
             ...input,
             keywordInput: activeTab.input.keyword,
             locationCode: activeTab.input.locationCode,
+            locationName: activeTab.input.locationName,
             displayedLocationCode:
               activeTab.input.locationCode ?? displayedLocationCode,
             setPreferredLocationCode,

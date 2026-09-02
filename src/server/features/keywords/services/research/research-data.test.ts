@@ -44,6 +44,7 @@ describe("mapAdsKeywordItems", () => {
         competition: 0.42,
         keywordDifficulty: null,
         intent: "unknown",
+        volumeScope: "national",
       },
     ]);
   });

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TAG_COLOR_KEYS } from "@/shared/tag-colors";
 import { booleanSearchParamSchema } from "@/types/schemas/domain";
+import type { ResolvedMarket } from "@/shared/keyword-locations";
 
 const savedKeywordTagSchema = z.string().trim().min(1).max(64);
 const tagColorSchema = z.enum(TAG_COLOR_KEYS);
@@ -15,11 +16,15 @@ const savedKeywordSortFields = [
 ] as const;
 const sortDirs = ["asc", "desc"] as const;
 
+const canonicalLocationNameSchema = z.string().trim().min(1).max(200);
+
 export const researchKeywordsSchema = z.object({
   projectId: z.string().min(1),
   keywords: z.array(z.string().min(1)).min(1).max(200),
   locationCode: z.number().int().positive().optional(),
   languageCode: z.string().min(2).max(8).optional(),
+  /** Canonical DataForSEO location_name; does not replace country locationCode. */
+  locationName: canonicalLocationNameSchema.optional(),
   resultLimit: z
     .union([z.literal(150), z.literal(300), z.literal(500)])
     .default(150),
@@ -64,6 +69,7 @@ export const saveKeywordsSchema = z
     keywords: z.array(z.string().min(1)).min(1).max(500),
     locationCode: z.number().int().positive().optional(),
     languageCode: z.string().min(2).max(8).optional(),
+    locationName: canonicalLocationNameSchema.optional(),
     tags: z.array(savedKeywordTagSchema).max(20).optional(),
     tagMode: z.enum(["append", "replace"]).optional(),
     metrics: z.array(savedKeywordMetricSchema).max(500).optional(),
@@ -140,7 +146,6 @@ export const refreshSavedKeywordMetricsSchema = z.object({
 
 export type ResearchKeywordsInput = z.infer<typeof researchKeywordsSchema>;
 export type SaveKeywordsInput = z.infer<typeof saveKeywordsSchema>;
-type ResolvedMarket = { locationCode: number; languageCode: string };
 export type ResolvedResearchKeywordsInput = Omit<
   ResearchKeywordsInput,
   keyof ResolvedMarket
@@ -176,6 +181,7 @@ export const serpAnalysisSchema = z.object({
   keyword: z.string().min(1),
   locationCode: z.number().int().positive().optional(),
   languageCode: z.string().min(2).max(8).optional(),
+  locationName: canonicalLocationNameSchema.optional(),
 });
 
 /* ------------------------------------------------------------------ */
@@ -195,6 +201,7 @@ const keywordModes = ["auto", "related", "suggestions", "ideas"] as const;
 export const keywordsSearchSchema = z.object({
   q: z.string().optional(),
   loc: z.coerce.number().int().positive().optional(),
+  locName: canonicalLocationNameSchema.optional(),
   kLimit: z.union([z.literal(150), z.literal(300), z.literal(500)]).optional(),
   mode: z.enum(keywordModes).optional(),
   cs: booleanSearchParamSchema.optional(),

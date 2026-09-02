@@ -21,6 +21,7 @@ export type KeywordSearchTabInput = {
   type: "keyword";
   keyword: string;
   locationCode?: number;
+  locationName?: string;
   resultLimit: ResultLimit;
   mode: KeywordMode;
   clickstream: boolean;

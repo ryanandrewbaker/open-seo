@@ -55,6 +55,7 @@ function mapKeywordDataItems(items: LabsKeywordDataItem[]): EnrichedKeyword[] {
       competition: item.keyword_info?.competition ?? null,
       keywordDifficulty: item.keyword_properties?.keyword_difficulty ?? null,
       intent: normalizeIntent(item.search_intent_info?.main_intent),
+      volumeScope: "national",
     });
   }
 
@@ -92,6 +93,7 @@ export function mapAdsKeywordItems(
         item.competition_index != null ? item.competition_index / 100 : null,
       keywordDifficulty: null,
       intent: "unknown",
+      volumeScope: "national",
     });
   }
 
