@@ -6,19 +6,27 @@ import { getSerpAnalysis } from "@/serverFunctions/keywords";
 export function useKeywordSerpAnalysis(
   projectId: string,
   locationCode: number | undefined,
+  locationName?: string,
 ) {
   const [serpKeyword, setSerpKeyword] = useState<string | null>(null);
   const [serpPage, setSerpPage] = useState(0);
   const SERP_PAGE_SIZE = 10;
 
   const serpQuery = useQuery({
-    queryKey: ["serpAnalysis", projectId, serpKeyword, locationCode],
+    queryKey: [
+      "serpAnalysis",
+      projectId,
+      serpKeyword,
+      locationCode,
+      locationName ?? null,
+    ],
     queryFn: () =>
       getSerpAnalysis({
         data: {
           projectId,
           keyword: serpKeyword!,
           locationCode,
+          locationName,
         },
       }),
     enabled: !!serpKeyword,

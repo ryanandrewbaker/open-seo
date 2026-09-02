@@ -21,6 +21,7 @@ type KeywordResearchRequestInput = {
   projectId: string;
   keywordInput: string;
   locationCode: number | undefined;
+  locationName?: string;
   resultLimit: ResultLimit;
   mode: KeywordMode;
   clickstream: boolean;
@@ -35,6 +36,7 @@ type KeywordResearchRequest = {
   keywords: string[];
   seedKeyword: string;
   locationCode: number | undefined;
+  locationName?: string;
   resultLimit: ResultLimit;
   mode: KeywordMode;
   clickstream: boolean;
@@ -54,6 +56,7 @@ export function buildKeywordResearchRequest(
     keywords,
     seedKeyword,
     locationCode: input.locationCode,
+    locationName: input.locationName?.trim() || undefined,
     resultLimit: input.resultLimit,
     mode: input.mode,
     clickstream: input.clickstream,
@@ -69,6 +72,7 @@ export function buildKeywordResearchQueryKey(
         request.projectId,
         request.keywords,
         request.locationCode,
+        request.locationName ?? null,
         request.resultLimit,
         request.mode,
         request.clickstream,
@@ -82,6 +86,7 @@ export function keywordResearchQueryFn(request: KeywordResearchRequest) {
       projectId: request.projectId,
       keywords: request.keywords,
       locationCode: request.locationCode,
+      locationName: request.locationName,
       resultLimit: request.resultLimit,
       mode: request.mode,
       clickstream: request.clickstream,
@@ -98,6 +103,7 @@ export function useKeywordResearchData(
     displayedLocationCode,
     keywordInput,
     locationCode,
+    locationName,
     mode,
     projectId,
     resultLimit,
@@ -107,12 +113,21 @@ export function useKeywordResearchData(
       buildKeywordResearchRequest({
         keywordInput,
         locationCode,
+        locationName,
         mode,
         projectId,
         resultLimit,
         clickstream,
       }),
-    [clickstream, keywordInput, locationCode, mode, projectId, resultLimit],
+    [
+      clickstream,
+      keywordInput,
+      locationCode,
+      locationName,
+      mode,
+      projectId,
+      resultLimit,
+    ],
   );
   const queryKey = useMemo(
     () => buildKeywordResearchQueryKey(request),
@@ -180,6 +195,7 @@ export function useKeywordResearchData(
     lastUsedFallback: researchQuery.data?.usedFallback ?? false,
     lastSearchKeyword: request?.seedKeyword ?? "",
     lastSearchLocationCode: displayedLocationCode,
+    lastSearchLocationName: request?.locationName,
     researchError,
     researchMutationError: researchQuery.error,
     searchedKeyword: request?.seedKeyword ?? "",

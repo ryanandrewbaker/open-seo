@@ -1,4 +1,8 @@
-import type { KeywordIntent, MonthlySearch } from "@/types/keywords";
+import type {
+  KeywordIntent,
+  KeywordVolumeScope,
+  MonthlySearch,
+} from "@/types/keywords";
 
 export type EnrichedKeyword = {
   keyword: string;
@@ -8,6 +12,7 @@ export type EnrichedKeyword = {
   competition: number | null;
   keywordDifficulty: number | null;
   intent: KeywordIntent;
+  volumeScope: KeywordVolumeScope;
 };
 
 export function normalizeKeyword(input: string): string {

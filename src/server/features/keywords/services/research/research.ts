@@ -17,6 +17,7 @@ import {
   fetchGoogleAdsResearchRows,
   fetchResearchRowsBySource,
 } from "./research-data";
+import { overlayLocalKeywordVolumes } from "./research-local-volume";
 import {
   AUTO_KEYWORD_SOURCES,
   MIN_NON_SEED_FOR_AUTO,
@@ -68,6 +69,7 @@ const cachedKeywordRowSchema = z.object({
     "navigational",
     "unknown",
   ]),
+  volumeScope: z.enum(["local", "national"]).optional().default("national"),
 });
 
 const sourceAttemptSchema = z.object({
@@ -89,7 +91,7 @@ const cachedResultSchema = z.object({
 
 // v3: research volumes are no longer clickstream-refined, and Google-Ads-only
 // locations route to keywords_for_keywords.
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 4;
 
 async function fetchRowsFromSource(
   source: KeywordSource,
@@ -254,6 +256,7 @@ async function buildResearchCacheKey(
     keywords: normalizedKeywords,
     locationCode: input.locationCode,
     languageCode: input.languageCode,
+    locationName: input.locationName ?? null,
     resultLimit: input.resultLimit,
     mode,
     depth: 3,
@@ -265,6 +268,9 @@ function persistRows(
   input: ResolvedResearchKeywordsInput,
   rows: EnrichedKeyword[],
 ) {
+  // Local volumes must not overwrite country-keyed keyword_metrics rows.
+  if (input.locationName) return;
+
   void Promise.all(
     rows.map((row) =>
       KeywordResearchRepository.upsertKeywordMetric({
@@ -325,7 +331,7 @@ export async function research(
     return cached;
   }
 
-  const result =
+  let result =
     provider === "google_ads"
       ? await fetchGoogleAdsRows(
           effectiveInput,
@@ -347,6 +353,18 @@ export async function research(
             billingCustomer,
             creditFeature,
           );
+
+  if (effectiveInput.locationName) {
+    result = {
+      ...result,
+      rows: await overlayLocalKeywordVolumes(
+        result.rows,
+        effectiveInput,
+        billingCustomer,
+        creditFeature,
+      ),
+    };
+  }
 
   await setCached(cacheKey, result, CACHE_TTL.researchResult);
   persistRows(effectiveInput, result.rows);

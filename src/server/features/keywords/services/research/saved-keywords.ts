@@ -55,7 +55,7 @@ export async function saveKeywords(input: ResolvedSaveKeywordsInput) {
       ),
   );
 
-  if (metricByKeyword.size > 0) {
+  if (metricByKeyword.size > 0 && !input.locationName) {
     await Promise.all(
       normalizedKeywords.map(async (keyword) => {
         const metric = metricByKeyword.get(keyword);

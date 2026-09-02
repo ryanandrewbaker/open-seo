@@ -14,6 +14,7 @@ import { parseKeywordInput } from "@/client/features/keywords/state/keywordContr
 type UseKeywordControlsFormInput = {
   keywordInput: string;
   locationCode: number;
+  locationName?: string;
   resultLimit: ResultLimit;
   keywordMode: KeywordMode;
   clickstream: boolean;
@@ -22,6 +23,7 @@ type UseKeywordControlsFormInput = {
 export type KeywordControlsValues = {
   keyword: string;
   locationCode: number;
+  locationName?: string;
   resultLimit: ResultLimit;
   mode: KeywordMode;
   clickstream: boolean;
@@ -64,6 +66,7 @@ export function useKeywordControlsForm(
     defaultValues: {
       keyword: input.keywordInput,
       locationCode: input.locationCode,
+      locationName: input.locationName,
       resultLimit: input.resultLimit,
       mode: input.keywordMode,
       clickstream: input.clickstream,
@@ -87,6 +90,7 @@ export function useKeywordControlsForm(
     form.reset({
       keyword: input.keywordInput,
       locationCode: input.locationCode,
+      locationName: input.locationName,
       resultLimit: input.resultLimit,
       mode: input.keywordMode,
       clickstream: input.clickstream,
@@ -96,6 +100,7 @@ export function useKeywordControlsForm(
     input.keywordInput,
     input.keywordMode,
     input.locationCode,
+    input.locationName,
     input.resultLimit,
     input.clickstream,
   ]);

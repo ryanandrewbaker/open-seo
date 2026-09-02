@@ -86,11 +86,15 @@ export async function fetchLiveSerp(input: {
   keyword: string;
   locationCode: number;
   languageCode: string;
+  locationName?: string;
 }): Promise<DataforseoApiResponse<SerpLiveItem[]>> {
+  const locationParams = input.locationName
+    ? { location_name: input.locationName }
+    : { location_code: input.locationCode };
   const response = await serpApi().googleOrganicLiveAdvanced([
     new SerpGoogleOrganicLiveAdvancedRequestInfo({
       keyword: input.keyword,
-      location_code: input.locationCode,
+      ...locationParams,
       language_code: input.languageCode,
       device: "desktop",
       os: "windows",

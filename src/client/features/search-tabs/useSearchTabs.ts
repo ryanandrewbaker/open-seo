@@ -106,6 +106,10 @@ function parseTabInput(value: unknown): SearchTabInput | null {
       keyword: value.keyword,
       locationCode:
         typeof value.locationCode === "number" ? value.locationCode : undefined,
+      locationName:
+        typeof value.locationName === "string" && value.locationName !== ""
+          ? value.locationName
+          : undefined,
       resultLimit: value.resultLimit,
       mode: value.mode,
       // Tabs persisted before the clickstream toggle existed default to off.

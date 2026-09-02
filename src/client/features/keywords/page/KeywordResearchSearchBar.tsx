@@ -10,6 +10,8 @@ import {
 } from "@/client/features/keywords/keywordResearchTypes";
 import { isLabsLocationCode } from "@/client/features/keywords/locations";
 import { LocationSelect } from "@/client/components/LocationSelect";
+import { SerpLocationCombobox } from "@/client/components/SerpLocationCombobox";
+import { getIsoCountryCode } from "@/shared/keyword-locations";
 import type { KeywordResearchControllerState } from "./types";
 
 type Props = {
@@ -70,7 +72,10 @@ export function KeywordResearchSearchBar({ controller }: Props) {
               {(field) => (
                 <LocationSelect
                   value={field.state.value}
-                  onChange={(code) => field.handleChange(code)}
+                  onChange={(code) => {
+                    field.handleChange(code);
+                    controlsForm.setFieldValue("locationName", undefined);
+                  }}
                   className="w-full lg:w-44 lg:shrink-0"
                 />
               )}
@@ -129,6 +134,25 @@ export function KeywordResearchSearchBar({ controller }: Props) {
             ) : null;
           }}
         </controlsForm.Field>
+        <controlsForm.Subscribe selector={(state) => state.values.locationCode}>
+          {(locationCode) => (
+            <controlsForm.Field name="locationName">
+              {(field) => (
+                <label className="flex w-full flex-col gap-1">
+                  <span className="text-sm font-medium text-base-content/80">
+                    Target location (optional)
+                  </span>
+                  <SerpLocationCombobox
+                    value={field.state.value}
+                    onChange={(name) => field.handleChange(name)}
+                    countryCode={getIsoCountryCode(locationCode)}
+                    placeholder="Search city or region…"
+                  />
+                </label>
+              )}
+            </controlsForm.Field>
+          )}
+        </controlsForm.Subscribe>
         <controlsForm.Field name="locationCode">
           {(locationField) =>
             isLabsLocationCode(locationField.state.value) ? (
