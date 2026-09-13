@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("cloudflare:workers", () => ({ env: {} }));
 vi.mock("@/server/lib/dataforseo", () => ({
   createDataforseoClient: mocks.createDataforseoClient,
+  SERP_ANALYSIS_DEPTH: 20,
 }));
 vi.mock("@/server/features/projects/services/ProjectService", () => ({
   ProjectService: {
@@ -188,6 +189,7 @@ describe("get_serp_results MCP evidence", () => {
       locationCode: 2036,
       languageCode: "en",
       locationName: "Ararat,Victoria,Australia",
+      depth: 20,
     });
   });
 });

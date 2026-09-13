@@ -121,4 +121,27 @@ describe("getSerpAnalysis cache depth", () => {
       expect.any(Number),
     );
   });
+
+  it("forwards a local locationName into live SERP without replacing the country", async () => {
+    mocks.getCached.mockResolvedValue(null);
+    const live = mockLiveSerp();
+
+    await getSerpAnalysis(
+      {
+        ...input,
+        locationCode: 2036,
+        locationName: "Ararat,Victoria,Australia",
+        depth: 20,
+      },
+      billingCustomer,
+    );
+
+    expect(live).toHaveBeenCalledWith({
+      keyword: "seo tools",
+      locationCode: 2036,
+      languageCode: "en",
+      locationName: "Ararat,Victoria,Australia",
+      depth: 20,
+    });
+  });
 });
