@@ -57,8 +57,8 @@ export const searchSerpLocationsTool = {
     },
   },
   handler: async (args: Args, _context: ToolContext) => {
-    // Dynamic import keeps dataforseo-client out of the worker's eager graph;
-    // serp-locations.ts statically imports the SDK via serpApi().
+    // Lazy-load the country location list so tool registration does not pull
+    // the KV-backed cache module into every MCP request's eager graph.
     const { fetchSerpLocationsForCountry, filterSerpLocations } =
       await import("@/server/lib/dataforseo/serp-locations");
     const locations = filterSerpLocations(

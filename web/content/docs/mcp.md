@@ -29,12 +29,12 @@ After adding the server, approve the OpenSEO login when prompted.
 
 ## Claude Desktop
 
-1. Open Settings -> Connectors.
-2. Click Add custom connector.
+1. Open Customize -> Connectors.
+2. Click Add (or +), then choose Add custom connector.
 3. Paste `https://app.openseo.so/mcp`.
 4. Approve the OpenSEO login when prompted.
 
-Claude Desktop custom connectors require a Claude plan that supports custom connectors.
+Claude Desktop custom connectors are available on Free, Pro, Max, Team, and Enterprise plans. Free plans support one custom connector.
 
 ## Cursor
 
@@ -114,7 +114,7 @@ Any other client that supports custom HTTP headers can send `Authorization: Bear
 OpenSEO MCP exposes tools for SEO research workflows:
 
 - Research keywords with volume, difficulty, and CPC.
-- Fetch live Google SERP results for keywords (mixed result types; inspect type and rank fields).
+- Fetch live Google SERP results for keywords (mixed result types; inspect type and rank fields). Optional `depth` (10–100, default 20) loads deeper ranks on demand.
 - Resolve a place name and country to a canonical DataForSEO location before local SERP or keyword calls. Use `locationName` for city targeting; keep the country `locationCode`.
 - Find exact keyword, page, rank, volume, CPC, intent, and traffic rows for a domain or page.
 - Compare SERP competitors across a supplied keyword set.
