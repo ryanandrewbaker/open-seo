@@ -2,6 +2,46 @@
 
 This repository is a long-lived fork of [every-app/open-seo](https://github.com/every-app/open-seo). We keep OpenSEO's product and keep adding local SEO and related workflow that we need in production. Upstream may never merge those changes. That is expected.
 
+## Upstream baseline
+
+Current upstream tag: **v0.1.8** (`7b9ee0e`, 2026-09-11). Last fork sync: 2026-09-13 on `sync/upstream-v0.1.8`.
+
+Local keyword targeting is still fork-only. The market model did not change:
+
+- market = country (`locationCode` + `languageCode`; Australia is `2036` / `en`)
+- `locationName` = optional local target (`Ararat,Victoria,Australia`)
+- discovery = national
+- Google Ads volume = local when `locationName` is set
+- provenance is explicit (`volumeScope`)
+- local values are never written into country-keyed `keyword_metrics`
+
+### v0.1.8 sync (2026-09-13)
+
+Merged upstream `v0.1.8` with `--no-ff`. Kept fork plumbing and took upstream implementation where it improved the same area.
+
+Upstream areas brought in:
+
+- rank tracking `match_case`
+- GA/GSC account search, clear, and full account removal
+- SAM recovery, metering, and reply controls
+- site-audit rate-limit pacing and resume
+- on-demand SERP depth (20 default, 100 on page-past)
+- empty SERP handling (`treatNoResultsAsEmpty`)
+- Search Console MCP reporting fixes
+- MCP transport `listChanged: false` and DataForSEO HTTP helpers (SDK client removed)
+- auth/workspace: last active org, unique member index, team/org UI
+- dashboard setup/onboarding rewrite; onboarding chat Durable Object removed
+- dependency and Cloudflare tooling updates (`agents` 0.22, `@cloudflare/think` 0.17, audit worker wrangler)
+
+Conflict resolutions (combine, do not drop either side):
+
+- live SERP: upstream HTTP + depth + empty-SERP, plus fork `locationName`
+- keyword SERP analysis: upstream depth cache, plus fork `locationName` in query/cache keys
+- MCP `get_serp_results`: upstream depth, plus fork type / rankGroup / rankAbsolute / `locationName`
+- `serpAnalysisSchema`: both `locationName` and `depth`
+
+No second local-volume overlay was added. Research still discovers nationally, then `overlayLocalKeywordVolumes` calls the shared `fetchKeywordMetricsForList` helper (already location-aware at the DataForSEO layer).
+
 ## Remotes
 
 | Remote     | Repo                       | Role                                                                 |
