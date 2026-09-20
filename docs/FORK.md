@@ -15,7 +15,7 @@ Local keyword targeting is still fork-only end-to-end. The market model did not 
 - provenance is explicit (`volumeScope`)
 - local values are never written into country-keyed `keyword_metrics`
 
-SERP location *search ranking* is now upstream-native (`rankSerpLocations` in `src/shared/serp-location-search.ts`, including AU state abbreviations such as `VIC`). The fork no longer has a separate `filterSerpLocations` substring matcher. Upstream still does not take optional `locationName` through research schema → `resolveMarket` → overlay → UI/cache → MCP.
+SERP location _search ranking_ is now upstream-native (`rankSerpLocations` in `src/shared/serp-location-search.ts`, including AU state abbreviations such as `VIC`). The fork no longer has a separate `filterSerpLocations` substring matcher. Upstream still does not take optional `locationName` through research schema → `resolveMarket` → overlay → UI/cache → MCP.
 
 ### 2026-09-21 sync (current upstream/main)
 
