@@ -192,4 +192,37 @@ describe("get_serp_results MCP evidence", () => {
       depth: 20,
     });
   });
+
+  it("keeps locationName when crawling a deeper SERP", async () => {
+    const live = vi.fn().mockResolvedValue([]);
+    mocks.createDataforseoClient.mockReturnValue({ serp: { live } });
+    mocks.getProjectForOrganization.mockResolvedValue({
+      id: "project_1",
+      locationCode: 2036,
+      languageCode: "en",
+    });
+
+    await getSerpResultsTool.handler(
+      {
+        projectId: "project_1",
+        queries: [
+          {
+            keyword: "newborn photographer",
+            locationCode: 2036,
+            locationName: "Melbourne,Victoria,Australia",
+          },
+        ],
+        depth: 100,
+      },
+      toolContext,
+    );
+
+    expect(live).toHaveBeenCalledWith({
+      keyword: "newborn photographer",
+      locationCode: 2036,
+      languageCode: "en",
+      locationName: "Melbourne,Victoria,Australia",
+      depth: 100,
+    });
+  });
 });

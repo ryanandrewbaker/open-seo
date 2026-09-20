@@ -92,7 +92,29 @@ describe("search_serp_locations MCP tool", () => {
     );
 
     expect(result.structuredContent?.locations).toEqual([]);
-    expect(textContent(result)).toContain("No SERP locations matched");
+    expect(textContent(result)).toContain("No Google locations match");
+  });
+
+  it("ranks Ararat VIC as the canonical Australian city", async () => {
+    const ararat = {
+      locationCode: 9046783,
+      locationName: "Ararat,Victoria,Australia",
+      locationType: "City",
+      displayLabel: "Ararat, Victoria",
+    };
+    mocks.fetchSerpLocationsForCountry.mockResolvedValue([
+      melbourne,
+      sydney,
+      ararat,
+    ]);
+
+    const result = await searchSerpLocationsTool.handler(
+      { query: "Ararat VIC", countryCode: "au" },
+      toolContext,
+    );
+
+    expect(result.structuredContent?.locations).toEqual([ararat]);
+    expect(textContent(result)).toContain("Ararat,Victoria,Australia");
   });
 
   it("rejects invalid ISO country codes on the input schema", () => {

@@ -144,4 +144,27 @@ describe("getSerpAnalysis cache depth", () => {
       depth: 20,
     });
   });
+
+  it("keeps locationName when requesting a deeper live SERP", async () => {
+    mocks.getCached.mockResolvedValue(null);
+    const live = mockLiveSerp();
+
+    await getSerpAnalysis(
+      {
+        ...input,
+        locationCode: 2036,
+        locationName: "Melbourne,Victoria,Australia",
+        depth: 100,
+      },
+      billingCustomer,
+    );
+
+    expect(live).toHaveBeenCalledWith({
+      keyword: "seo tools",
+      locationCode: 2036,
+      languageCode: "en",
+      locationName: "Melbourne,Victoria,Australia",
+      depth: 100,
+    });
+  });
 });
