@@ -1,37 +1,29 @@
 import { z } from "zod";
-import type { SerpLocationResult } from "@/server/lib/dataforseo/serp-locations";
-import { type ToolContext } from "@/server/mcp/context";
+import {
+  fetchSerpLocationsForCountry,
+  type SerpLocationResult,
+} from "@/server/lib/dataforseo/serp-locations";
 import { mcpResponse } from "@/server/mcp/formatters";
 import { optionalMetaOutputSchema } from "@/server/mcp/output-schemas";
 import { formatMcpTable, type McpTableColumn } from "@/server/mcp/table";
-
-/** ISO 3166-1 alpha-2, e.g. "us" — DataForSEO rejects country names. */
-const countryCodeSchema = z
-  .string()
-  .regex(/^[a-z]{2}$/i, {
-    message: "Must be an ISO 3166-1 alpha-2 country code (e.g. 'au', 'us').",
-  })
-  .describe("ISO 3166-1 alpha-2 country code, e.g. 'au' or 'US'.");
+import { rankSerpLocations } from "@/shared/serp-location-search";
 
 const inputSchema = {
   query: z
     .string()
     .min(1)
     .max(100)
-    .describe("Place name to search, e.g. 'Melbourne'."),
-  countryCode: countryCodeSchema,
+    .describe('Place name, e.g. "Melbourne", "Ararat VIC", or "Portland OR".'),
+  countryCode: z
+    .string()
+    .regex(/^[a-zA-Z]{2}$/, {
+      message: "Must be an ISO 3166-1 alpha-2 country code (e.g. 'au', 'us').",
+    })
+    .describe('Two-letter ISO country code, e.g. "au" or "us".'),
 } as const;
 
-const locationOutputSchema = z
-  .object({
-    locationCode: z.number(),
-    locationName: z.string(),
-    locationType: z.string(),
-    displayLabel: z.string(),
-  })
-  .passthrough();
-
 const LOCATION_COLUMNS: McpTableColumn<SerpLocationResult>[] = [
+  { header: "locationName", value: (loc) => loc.locationName },
   { header: "locationCode", value: (loc) => loc.locationCode },
   { header: "type", value: (loc) => loc.locationType },
   { header: "displayLabel", value: (loc) => loc.displayLabel },
@@ -44,35 +36,32 @@ export const searchSerpLocationsTool = {
   config: {
     title: "Search SERP locations",
     description:
-      "Search DataForSEO Google SERP locations by place name and ISO country code. Use this before supplying locationName to research_keywords, get_keyword_metrics, or get_serp_results when the canonical name is not already verified. Returns up to 10 matches. Uses no credits — the location list is cached.",
+      "Find the exact DataForSEO location name for local targeting. Returns up to 10 matches; pass the chosen `locationName` verbatim to create_rank_tracker, research_keywords, get_keyword_metrics, or get_serp_results. Keep the country locationCode. Uses no credits.",
     inputSchema,
-    outputSchema: {
-      locations: z.array(locationOutputSchema),
+    outputSchema: z.looseObject({
+      locations: z.array(
+        z.looseObject({
+          locationName: z.string(),
+          locationCode: z.number(),
+          locationType: z.string(),
+        }),
+      ),
       ...optionalMetaOutputSchema,
-    },
+    }),
     annotations: {
       readOnlyHint: true,
       openWorldHint: false,
       destructiveHint: false,
     },
   },
-  handler: async (args: Args, _context: ToolContext) => {
-    // Lazy-load the country location list so tool registration does not pull
-    // the KV-backed cache module into every MCP request's eager graph.
-    const { fetchSerpLocationsForCountry, filterSerpLocations } =
-      await import("@/server/lib/dataforseo/serp-locations");
-    const locations = filterSerpLocations(
-      await fetchSerpLocationsForCountry(args.countryCode),
-      args.query,
-    );
+  handler: async (args: Args) => {
+    const all = await fetchSerpLocationsForCountry(args.countryCode);
+    const locations = rankSerpLocations(args.query, all, args.countryCode);
     const text =
       locations.length === 0
-        ? `No SERP locations matched "${args.query}" in ${args.countryCode}.`
+        ? `No Google locations match "${args.query}" in ${args.countryCode}. Try the city name alone.`
         : `SERP locations (${locations.length}):\n${formatMcpTable(locations, LOCATION_COLUMNS)}`;
 
-    return mcpResponse({
-      text,
-      structuredContent: { locations },
-    });
+    return mcpResponse({ text, structuredContent: { locations } });
   },
 };

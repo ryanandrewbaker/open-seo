@@ -327,6 +327,7 @@ describe("MCP tool text output (service-backed tools)", () => {
         run: {
           id: "run_1",
           lastCheckedAt: null,
+          completedAt: null,
           status: "failed",
           errorMessage: "Provider request timed out",
         },
@@ -340,7 +341,7 @@ describe("MCP tool text output (service-backed tools)", () => {
     );
 
     expect(textContent(result)).toContain(
-      "Latest run failed: Provider request timed out",
+      "Latest run: failed — Provider request timed out",
     );
     expect(result.structuredContent).toMatchObject({
       results: {

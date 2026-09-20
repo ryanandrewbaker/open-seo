@@ -50,21 +50,6 @@ function cacheKey(iso: string): string {
 export const SERP_LOCATION_SEARCH_LIMIT = 10;
 
 /**
- * Case-insensitive `displayLabel` match, same behaviour as the Local targeting
- * combobox. `query` is trimmed; results are capped at
- * {@link SERP_LOCATION_SEARCH_LIMIT}.
- */
-export function filterSerpLocations(
-  locations: SerpLocationResult[],
-  query: string,
-): SerpLocationResult[] {
-  const needle = query.trim().toLowerCase();
-  return locations
-    .filter((loc) => loc.displayLabel.toLowerCase().includes(needle))
-    .slice(0, SERP_LOCATION_SEARCH_LIMIT);
-}
-
-/**
  * Full sub-country location list for one country. `countryCode` is ISO
  * 3166-1 alpha-2 ("us", "gb") — the endpoint rejects country *names* with a
  * task-level Invalid Field error, which assertOk surfaces.
