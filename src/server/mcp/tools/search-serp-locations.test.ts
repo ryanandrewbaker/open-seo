@@ -3,7 +3,7 @@ import { objectSchema } from "@/server/mcp/output-schemas";
 import { SERP_LOCATION_SEARCH_LIMIT } from "@/server/lib/dataforseo/serp-locations";
 import type * as serpLocationsModule from "@/server/lib/dataforseo/serp-locations";
 import { searchSerpLocationsTool } from "./search-serp-locations";
-import { makeToolContext, textContent } from "./tool-test-support";
+import { textContent } from "./tool-test-support";
 
 const melbourne = {
   locationCode: 1000567,
@@ -33,7 +33,6 @@ vi.mock("@/server/lib/dataforseo/serp-locations", async (importOriginal) => {
   };
 });
 
-const toolContext = makeToolContext();
 const inputSchema = objectSchema(searchSerpLocationsTool.config.inputSchema);
 
 describe("search_serp_locations MCP tool", () => {
@@ -43,10 +42,10 @@ describe("search_serp_locations MCP tool", () => {
   });
 
   it("returns matching location identity fields for a valid search", async () => {
-    const result = await searchSerpLocationsTool.handler(
-      { query: "Melbourne", countryCode: "au" },
-      toolContext,
-    );
+    const result = await searchSerpLocationsTool.handler({
+      query: "Melbourne",
+      countryCode: "au",
+    });
 
     expect(mocks.fetchSerpLocationsForCountry).toHaveBeenCalledWith("au");
     expect(result.structuredContent?.locations).toEqual([melbourne]);
@@ -57,10 +56,10 @@ describe("search_serp_locations MCP tool", () => {
   });
 
   it("matches place names case-insensitively", async () => {
-    const result = await searchSerpLocationsTool.handler(
-      { query: "melbourne", countryCode: "AU" },
-      toolContext,
-    );
+    const result = await searchSerpLocationsTool.handler({
+      query: "melbourne",
+      countryCode: "AU",
+    });
 
     expect(result.structuredContent?.locations).toEqual([melbourne]);
   });
@@ -74,10 +73,10 @@ describe("search_serp_locations MCP tool", () => {
     }));
     mocks.fetchSerpLocationsForCountry.mockResolvedValue(many);
 
-    const result = await searchSerpLocationsTool.handler(
-      { query: "Melbourne", countryCode: "au" },
-      toolContext,
-    );
+    const result = await searchSerpLocationsTool.handler({
+      query: "Melbourne",
+      countryCode: "au",
+    });
 
     const locations = result.structuredContent?.locations;
     expect(Array.isArray(locations)).toBe(true);
@@ -86,10 +85,10 @@ describe("search_serp_locations MCP tool", () => {
   });
 
   it("returns an empty locations array when nothing matches", async () => {
-    const result = await searchSerpLocationsTool.handler(
-      { query: "Atlantis", countryCode: "au" },
-      toolContext,
-    );
+    const result = await searchSerpLocationsTool.handler({
+      query: "Atlantis",
+      countryCode: "au",
+    });
 
     expect(result.structuredContent?.locations).toEqual([]);
     expect(textContent(result)).toContain("No Google locations match");
@@ -108,10 +107,10 @@ describe("search_serp_locations MCP tool", () => {
       ararat,
     ]);
 
-    const result = await searchSerpLocationsTool.handler(
-      { query: "Ararat VIC", countryCode: "au" },
-      toolContext,
-    );
+    const result = await searchSerpLocationsTool.handler({
+      query: "Ararat VIC",
+      countryCode: "au",
+    });
 
     expect(result.structuredContent?.locations).toEqual([ararat]);
     expect(textContent(result)).toContain("Ararat,Victoria,Australia");
