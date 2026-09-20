@@ -4,9 +4,9 @@ This repository is a long-lived fork of [every-app/open-seo](https://github.com/
 
 ## Upstream baseline
 
-Current upstream tag: **v0.1.8** (`7b9ee0e`, 2026-09-11). Last fork sync: 2026-09-13 on `sync/upstream-v0.1.8`.
+Current upstream: **v0.1.9** (`84e4705`, 2026-09-17) plus 20 later commits on `upstream/main` (`0ffff93`, `v0.1.9-20-g0ffff93`). Last fork sync: 2026-09-21 on `sync/upstream-2026-09-21`. Previous baseline: **v0.1.8** (`7b9ee0e`), synced 2026-09-13.
 
-Local keyword targeting is still fork-only. The market model did not change:
+Local keyword targeting is still fork-only end-to-end. The market model did not change:
 
 - market = country (`locationCode` + `languageCode`; Australia is `2036` / `en`)
 - `locationName` = optional local target (`Ararat,Victoria,Australia`)
@@ -14,6 +14,30 @@ Local keyword targeting is still fork-only. The market model did not change:
 - Google Ads volume = local when `locationName` is set
 - provenance is explicit (`volumeScope`)
 - local values are never written into country-keyed `keyword_metrics`
+
+SERP location *search ranking* is now upstream-native (`rankSerpLocations` in `src/shared/serp-location-search.ts`, including AU state abbreviations such as `VIC`). The fork no longer has a separate `filterSerpLocations` substring matcher. Upstream still does not take optional `locationName` through research schema → `resolveMarket` → overlay → UI/cache → MCP.
+
+### 2026-09-21 sync (current upstream/main)
+
+Merged `upstream/main` (`0ffff93`) with `--no-ff`. Kept fork plumbing and took upstream implementation where it improved the same area.
+
+Upstream areas brought in:
+
+- Reports: saved reports, templates, viewer, public share (static HTML, edge cache, social image via `takumi-js`), MCP report/template tools
+- Rank tracking: save-time location validation, empty-run handling, `repair:rank-locations`, `rankSerpLocations` (US/CA/AU abbreviations)
+- MCP: `z.looseObject` output schemas, client-label/`whoami`, cleanup tools (saved keywords, reports, audits), filtered Search Console results, trimmed tool output, OAuth user-scoped grants
+- Skills: `seo-report`, seo-audit shortlist workflow, simplified agent setup; obsolete `webapp-testing` skill removed
+- Site/SAM: Sam beta opt-in, self-host telemetry skip for health probes
+- Marketing: free discovery tools, About/Why pages, strategy libraries
+- Tooling: app version 0.1.9, Vitest 4, pnpm audit overrides
+- Migrations: D1 `drizzle/0047_reports.sql`, Postgres `drizzle-pg/0025_reports.sql`
+
+Conflict resolutions (combine, do not drop either side):
+
+- `search_serp_locations`: upstream `rankSerpLocations` + `z.looseObject`, plus fork copy covering `research_keywords` / `get_keyword_metrics` / `get_serp_results` (not only rank trackers)
+- location UI server fn: upstream `rankSerpLocations` (replaces fork `filterSerpLocations`)
+- `AvailableTools.tsx`: accepted upstream deletion (MCP setup redesign); tool stays registered on the MCP server
+- Auto-merged MCP tools kept fork `locationName` / SERP rank fields and took upstream `z.looseObject` + report/cleanup registrations; removed a duplicate `searchSerpLocationsTool` import in `server.ts`
 
 ### v0.1.8 sync (2026-09-13)
 
@@ -83,7 +107,7 @@ Keep this list current when we add fork-only work.
 
 ### MCP
 
-- `search_serp_locations`: resolve a place name + ISO country to canonical `locationName` and city `locationCode`.
+- `search_serp_locations`: resolve a place name + ISO country to canonical `locationName` and city `locationCode`. Ranking uses upstream `rankSerpLocations`. The fork description still points at keyword research and live SERP, not only rank trackers.
 - `research_keywords`, `get_keyword_metrics`, and `get_serp_results` accept that `locationName`.
 - `get_serp_results` preserves SERP `type`, `rankGroup`, and `rankAbsolute`.
 
@@ -149,6 +173,8 @@ These files already carry fork behaviour and change often upstream:
 - `src/client/features/keywords/` (search bar, query keys, page, controller)
 - `src/types/keywords.ts` and `src/types/schemas/keywords.ts`
 - `src/server/mcp/schemas.ts` and `src/server/mcp/tools/{research-keywords,dataforseo-research-tools,get-serp-results,search-serp-locations}.ts`
+- `src/server/mcp/server.ts` (tool imports; watch for duplicate `searchSerpLocationsTool` after both sides add it)
+- `src/shared/serp-location-search.ts` (take upstream ranking; do not revive `filterSerpLocations`)
 - `web/content/docs/mcp.md`
 
 When resolving, keep the invariants in "What differs from upstream". Prefer upstream's new helpers if they do the same job. Do not drop `locationName` or `volumeScope` to make a merge quieter.
