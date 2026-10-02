@@ -18,7 +18,6 @@ function makeRow(keyword: string, intent: KeywordIntent): KeywordResearchRow {
     cpc: 1,
     competition: 0.5,
     intent,
-    volumeScope: "national",
   };
 }
 

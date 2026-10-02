@@ -29,16 +29,12 @@ function makeRow(
     cpc: Number((1.25 + index * 0.15).toFixed(2)),
     competition: Number((0.05 + (index % 10) * 0.04).toFixed(2)),
     intent: index % 3 === 0 ? "commercial" : "informational",
-    volumeScope: "national",
     ...overrides,
   };
 }
 
 export function getKeywordResearchFixture(data: ResolvedResearchKeywordsInput) {
   const seedKeyword = data.keywords[0] ?? "keyword research";
-  const volumeScope = data.locationName
-    ? ("local" as const)
-    : ("national" as const);
   const rows = [
     makeRow(seedKeyword, 0, {
       searchVolume: 288_431,
@@ -46,17 +42,16 @@ export function getKeywordResearchFixture(data: ResolvedResearchKeywordsInput) {
       cpc: 11.93,
       competition: 0.07,
       intent: "informational",
-      volumeScope,
     }),
-    makeRow(`${seedKeyword} tools`, 1, { volumeScope }),
-    makeRow(`${seedKeyword} software`, 2, { volumeScope }),
-    makeRow(`${seedKeyword} checklist`, 3, { volumeScope }),
-    makeRow(`${seedKeyword} template`, 4, { volumeScope }),
-    makeRow(`${seedKeyword} examples`, 5, { volumeScope }),
-    makeRow(`${seedKeyword} guide`, 6, { volumeScope }),
-    makeRow(`${seedKeyword} strategy`, 7, { volumeScope }),
-    makeRow(`${seedKeyword} platform`, 8, { volumeScope }),
-    makeRow(`${seedKeyword} generator`, 9, { volumeScope }),
+    makeRow(`${seedKeyword} tools`, 1),
+    makeRow(`${seedKeyword} software`, 2),
+    makeRow(`${seedKeyword} checklist`, 3),
+    makeRow(`${seedKeyword} template`, 4),
+    makeRow(`${seedKeyword} examples`, 5),
+    makeRow(`${seedKeyword} guide`, 6),
+    makeRow(`${seedKeyword} strategy`, 7),
+    makeRow(`${seedKeyword} platform`, 8),
+    makeRow(`${seedKeyword} generator`, 9),
   ];
 
   return {

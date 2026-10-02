@@ -87,14 +87,12 @@ describe("fetchKeywordMetricsForList", () => {
       creditFeature: "rank_tracking",
     });
 
-    expect(adsSearchVolume).toHaveBeenCalledWith(
-      expect.objectContaining({
-        keywords: ["hotel reykjavik"],
-        locationCode: 2352,
-        languageCode: "is",
-        creditFeature: "rank_tracking",
-      }),
-    );
+    expect(adsSearchVolume).toHaveBeenCalledWith({
+      keywords: ["hotel reykjavik"],
+      locationCode: 2352,
+      languageCode: "is",
+      creditFeature: "rank_tracking",
+    });
     // Item without a keyword is dropped; Ads carries no KD/intent.
     expect(rows).toEqual([
       {
@@ -222,78 +220,6 @@ describe("fetchKeywordMetricsForList", () => {
       keyword: "plumber (24/7)",
       searchVolume: null,
       keywordDifficulty: null,
-    });
-  });
-
-  it("uses country Labs targeting for Australia when locationName is omitted", async () => {
-    const keywordOverview = vi.fn().mockResolvedValue([
-      {
-        keyword: "newborn photographer",
-        keyword_info: { search_volume: 5400 },
-        keyword_properties: { keyword_difficulty: 28 },
-      },
-    ]);
-    const adsSearchVolume = vi.fn();
-    const client = fakeClient({ keywordOverview, adsSearchVolume });
-
-    await fetchKeywordMetricsForList(client, {
-      keywords: ["newborn photographer"],
-      locationCode: 2036,
-      languageCode: "en",
-      creditFeature: "keyword_research",
-    });
-
-    expect(keywordOverview).toHaveBeenCalledWith(
-      expect.objectContaining({
-        locationCode: 2036,
-        languageCode: "en",
-      }),
-    );
-    expect(adsSearchVolume).not.toHaveBeenCalled();
-  });
-
-  it("sends Ararat locationName to Google Ads while keeping Australia locationCode", async () => {
-    const adsSearchVolume = vi.fn().mockResolvedValue([
-      {
-        keyword: "newborn photographer",
-        search_volume: 70,
-        cpc: 3.1,
-        competition_index: 20,
-        monthly_searches: [],
-      },
-    ]);
-    const keywordOverview = vi.fn().mockResolvedValue([
-      {
-        keyword: "newborn photographer",
-        keyword_info: { search_volume: 5400 },
-        keyword_properties: { keyword_difficulty: 28 },
-        search_intent_info: { main_intent: "commercial" },
-      },
-    ]);
-    const client = fakeClient({ adsSearchVolume, keywordOverview });
-
-    const rows = await fetchKeywordMetricsForList(client, {
-      keywords: ["newborn photographer"],
-      locationCode: 2036,
-      languageCode: "en",
-      locationName: "Ararat,Victoria,Australia",
-      creditFeature: "keyword_research",
-    });
-
-    expect(adsSearchVolume).toHaveBeenCalledWith(
-      expect.objectContaining({
-        locationCode: 2036,
-        locationName: "Ararat,Victoria,Australia",
-        languageCode: "en",
-      }),
-    );
-    expect(keywordOverview).toHaveBeenCalledWith(
-      expect.objectContaining({ locationCode: 2036, languageCode: "en" }),
-    );
-    expect(rows[0]).toMatchObject({
-      keyword: "newborn photographer",
-      searchVolume: 70,
-      keywordDifficulty: 28,
     });
   });
 });

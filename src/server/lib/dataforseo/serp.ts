@@ -87,7 +87,6 @@ export async function fetchLiveSerp(input: {
   keyword: string;
   locationCode: number;
   languageCode: string;
-  locationName?: string;
   depth?: number;
   /** Canonical DataForSEO name of a city, county, or region for a local SERP. */
   locationName?: string;

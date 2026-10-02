@@ -35,11 +35,8 @@ import type { KeywordResearchControllerState } from "./types";
 type ControllerProps = Omit<KeywordResearchControllerInput, "onFormSubmit">;
 type Props = Omit<
   ControllerProps,
-  | "locationCode"
-  | "locationName"
-  | "displayedLocationCode"
-  | "setPreferredLocationCode"
-> & { locationCode?: number; locationName?: string };
+  "locationCode" | "displayedLocationCode" | "setPreferredLocationCode"
+> & { locationCode?: number };
 type KeywordSearchTab = SearchTab & { input: KeywordSearchTabInput };
 
 function isKeywordSearchTab(tab: SearchTab): tab is KeywordSearchTab {
@@ -171,7 +168,6 @@ export function KeywordResearchPage(input: Props) {
             ...input,
             keywordInput: activeTab.input.keyword,
             locationCode: activeTab.input.locationCode,
-            locationName: activeTab.input.locationName,
             displayedLocationCode:
               activeTab.input.locationCode ?? displayedLocationCode,
             locationName: activeTab.input.locationName,

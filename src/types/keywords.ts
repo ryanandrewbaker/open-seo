@@ -11,9 +11,6 @@ export type MonthlySearch = {
   searchVolume: number;
 };
 
-/** Whether searchVolume/CPC were fetched for a city/region or the country. */
-export type KeywordVolumeScope = "local" | "national";
-
 export type KeywordResearchRow = {
   keyword: string;
   searchVolume: number | null;
@@ -22,7 +19,6 @@ export type KeywordResearchRow = {
   cpc: number | null;
   competition: number | null;
   intent: KeywordIntent;
-  volumeScope: KeywordVolumeScope;
 };
 
 export type SavedKeywordRow = {
