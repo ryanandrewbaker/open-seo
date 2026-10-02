@@ -118,7 +118,7 @@ Any other client that supports custom HTTP headers can send `Authorization: Bear
 OpenSEO MCP exposes tools for SEO research workflows:
 
 - Research keywords with volume, difficulty, and CPC.
-- Fetch live Google organic SERP results for keywords.
+- Fetch live Google SERP results for keywords. Items include `type`, `rankGroup`, `rankAbsolute`, and `rank`.
 - Find exact keyword, page, rank, volume, CPC, intent, and traffic rows for a domain or page.
 - Compare SERP competitors across a supplied keyword set.
 - Search local businesses near a coordinate, filtering by rating, review count, or claimed status.
@@ -127,7 +127,7 @@ OpenSEO MCP exposes tools for SEO research workflows:
 - Collect Google reviews (including reviews from other sites) and Google Business posts.
 - Look up valid Google Business category slugs.
 - Check Google Maps rank at each point of a grid around a business.
-- Hydrate keywords with search volume, difficulty, intent, CPC, and trends.
+- Hydrate keywords with search volume, difficulty, intent, CPC, and trends. Optional `locationName` returns local Google Ads volume and `volume_scope` `local` or `national`.
 - List saved keywords from an OpenSEO project.
 - Save useful keywords back to OpenSEO.
 - Read rank tracker configs and latest keyword positions.
