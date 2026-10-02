@@ -18,7 +18,9 @@ import {
 } from "@/server/mcp/schemas";
 
 type SerpItem = {
-  type?: string | null;
+  type: string | null;
+  rankGroup: number | null;
+  rankAbsolute: number | null;
   rank: number | null;
   title: string | null;
   url: string | null;
@@ -27,6 +29,9 @@ type SerpItem = {
 };
 
 const SERP_ITEM_COLUMNS: McpTableColumn<SerpItem>[] = [
+  { header: "type", value: (item) => item.type },
+  { header: "rank_group", value: (item) => item.rankGroup },
+  { header: "rank_absolute", value: (item) => item.rankAbsolute },
   { header: "rank", value: (item) => item.rank },
   { header: "domain", value: (item) => item.domain },
   { header: "title", value: (item) => item.title },
@@ -74,7 +79,7 @@ export const getSerpResultsTool = {
   config: {
     title: "Get Google SERP results",
     description:
-      "Fetch live Google organic search results for 1-10 keywords. Use this to inspect who ranks for a query, verify competitors, compare SERPs across keywords, or gather source URLs before content planning. Returns the top `depth` result rows per keyword (default 20). Charges credits per keyword: ~5 each at the default depth 20, and each additional 10 of depth adds ~2.5. Does not save results to OpenSEO. Per-keyword errors don't fail the batch.",
+      "Fetch live Google organic search results for 1-10 keywords. Use this to inspect who ranks for a query, verify competitors, compare SERPs across keywords, or gather source URLs before content planning. Items include mixed SERP types — inspect `type`. `rankGroup` is position among items of the same type; `rankAbsolute` is overall page position; `rank` is rankAbsolute falling back to rankGroup. Returns the top `depth` result rows per keyword (default 20). Charges credits per keyword: ~5 each at the default depth 20, and each additional 10 of depth adds ~2.5. Does not save results to OpenSEO. Per-keyword errors don't fail the batch.",
     inputSchema,
     outputSchema: z.looseObject({
       results: z.array(
@@ -86,7 +91,9 @@ export const getSerpResultsTool = {
               items: z.array(
                 z
                   .object({
-                    type: z.string().nullable().optional(),
+                    type: z.string().nullable(),
+                    rankGroup: z.number().nullable(),
+                    rankAbsolute: z.number().nullable(),
                     rank: z.number().nullable(),
                     title: z.string().nullable(),
                     url: z.string().nullable(),
@@ -135,7 +142,9 @@ export const getSerpResultsTool = {
           });
           // Trim noise — return only essentials per item.
           const trimmed = items.slice(0, depth).map((item) => ({
-            type: item.type,
+            type: item.type ?? null,
+            rankGroup: item.rank_group ?? null,
+            rankAbsolute: item.rank_absolute ?? null,
             rank: item.rank_absolute ?? item.rank_group ?? null,
             title: item.title ?? null,
             url: item.url ?? null,
