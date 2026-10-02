@@ -13,6 +13,7 @@ import {
   optionalMetaOutputSchema,
 } from "@/server/mcp/output-schemas";
 import { withMcpProjectAuth } from "@/server/mcp/project-auth";
+import { assertLocalResearchLocation } from "@/server/features/keywords/services/research/local-volume";
 import {
   formatMcpTable,
   readPath,
@@ -381,6 +382,13 @@ const getKeywordMetricsInputSchema = {
     .describe("Keywords to fetch metrics for (1-700)."),
   locationCode: locationCodeSchema.optional(),
   languageCode: languageCodeSchema.optional(),
+  locationName: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      "Optional city, county, or region inside the query's country, for local Google Ads volume. Call search_serp_locations first and pass its locationName verbatim. Volume, CPC, and competition then come from Google Ads for that area; KD and intent stay national. The country locationCode remains national.",
+    ),
   includeMonthlyTrends: z
     .boolean()
     .optional()
@@ -1060,7 +1068,7 @@ export const getKeywordMetricsTool = {
   config: {
     title: "Get keyword metrics",
     description:
-      "Hydrate up to 700 known keywords with search volume, keyword difficulty (KD), search intent, CPC, competition, and monthly trends in a single call. Use it to score candidate or known keywords — including Search Console striking-distance queries — by real demand and ranking difficulty. For countries served from Google Ads data (e.g. Iceland), KD and intent are null. Charges credits.",
+      "Hydrate up to 700 known keywords with search volume, keyword difficulty (KD), search intent, CPC, competition, and monthly trends in a single call. Pass locationName from search_serp_locations for city-level Google Ads volume; KD/intent stay country-level. Each row includes volume_scope `local` or `national`. Use it to score candidate or known keywords — including Search Console striking-distance queries — by real demand and ranking difficulty. For countries served from Google Ads data (e.g. Iceland), KD and intent are null. Charges credits.",
     inputSchema: getKeywordMetricsInputSchema,
     outputSchema: z.looseObject({
       keywords: z.array(looseObjectOutputSchema),
@@ -1077,26 +1085,34 @@ export const getKeywordMetricsTool = {
     // Assert against the RESOLVED pair: an explicit language with an omitted
     // location must validate against the project's default location.
     assertLanguageForLocation(locationCode, languageCode);
+    if (args.locationName) {
+      await assertLocalResearchLocation(locationCode, args.locationName);
+    }
     const client = createDataforseoClient(context.billing);
     const metrics = await fetchKeywordMetricsForList(client, {
       keywords: args.keywords,
       locationCode,
       languageCode,
+      locationName: args.locationName,
       includeClickstreamData: args.includeClickstreamData ?? false,
       creditFeature: "keyword_research",
     });
+    const volumeScope = args.locationName ? "local" : "national";
     const rows = sortKeywordMetricRows(
       metrics.map(toMcpKeywordMetricRow),
       args.sortBy ?? "search_volume",
-    ).map((row) =>
-      args.includeMonthlyTrends === false
+    ).map((row) => {
+      const withScope = { ...row, volume_scope: volumeScope };
+      return args.includeMonthlyTrends === false
         ? Object.fromEntries(
-            Object.entries(row).filter(([key]) => key !== "monthly_searches"),
+            Object.entries(withScope).filter(
+              ([key]) => key !== "monthly_searches",
+            ),
           )
-        : row,
-    );
+        : withScope;
+    });
 
-    const header = `Fetched metrics for ${rows.length} keywords. Columns: volume = monthly searches, KD = keyword difficulty (0-100), CPC in USD, competition = paid competition (0-1); "—" = unavailable.`;
+    const header = `Fetched metrics for ${rows.length} keywords (${volumeScope} volume). Columns: volume = monthly searches, KD = keyword difficulty (0-100), CPC in USD, competition = paid competition (0-1); "—" = unavailable.`;
     return mcpResponse({
       text:
         rows.length === 0
