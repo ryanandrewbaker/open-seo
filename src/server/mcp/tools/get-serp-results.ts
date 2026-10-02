@@ -8,19 +8,17 @@ import { buildProjectMeta } from "@/server/mcp/context";
 import { optionalMetaOutputSchema } from "@/server/mcp/output-schemas";
 import { withMcpProjectAuth } from "@/server/mcp/project-auth";
 import { resolveMarket } from "@/shared/keyword-locations";
+import { assertLocalResearchLocation } from "@/server/features/keywords/services/research/local-volume";
+import { toolErrorMessage } from "@/server/mcp/tool-error-message";
 import { formatMcpTable, type McpTableColumn } from "@/server/mcp/table";
 import {
   languageCodeSchema,
   locationCodeSchema,
-  locationNameSchema,
   projectIdSchema,
 } from "@/server/mcp/schemas";
 
 type SerpItem = {
-  type: string | null;
-  rankGroup: number | null;
-  rankAbsolute: number | null;
-  /** Legacy combined field: rankAbsolute falling back to rankGroup. */
+  type?: string | null;
   rank: number | null;
   title: string | null;
   url: string | null;
@@ -29,9 +27,7 @@ type SerpItem = {
 };
 
 const SERP_ITEM_COLUMNS: McpTableColumn<SerpItem>[] = [
-  { header: "type", value: (item) => item.type },
-  { header: "rank_group", value: (item) => item.rankGroup },
-  { header: "rank_absolute", value: (item) => item.rankAbsolute },
+  { header: "rank", value: (item) => item.rank },
   { header: "domain", value: (item) => item.domain },
   { header: "title", value: (item) => item.title },
   { header: "url", value: (item) => item.url },
@@ -41,7 +37,13 @@ const querySchema = z.object({
   keyword: z.string().min(1).describe("Search query to fetch the SERP for."),
   locationCode: locationCodeSchema.optional(),
   languageCode: languageCodeSchema.optional(),
-  locationName: locationNameSchema.optional(),
+  locationName: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      "Optional city, county, or region inside the query's country, for a local SERP. Call search_serp_locations first and pass its locationName verbatim. Same price as a national SERP.",
+    ),
 });
 
 const inputSchema = {
@@ -72,7 +74,7 @@ export const getSerpResultsTool = {
   config: {
     title: "Get Google SERP results",
     description:
-      "Fetch live Google SERP results for 1-10 keywords. Use this to inspect who ranks for a query, verify competitors, compare SERPs across keywords, or gather source URLs before content planning. Items include mixed SERP types (organic, local_pack, featured snippets, PAA, etc.) — inspect `type`. `rankGroup` is position among items of the same type; `rankAbsolute` is overall page position including SERP features. For city/local searches, resolve locationName with search_serp_locations and keep the country locationCode. Returns the top `depth` result rows per keyword (default 20). Charges credits per keyword: ~5 each at the default depth 20, and each additional 10 of depth adds ~2.5. Does not save results to OpenSEO. Per-keyword errors don't fail the batch.",
+      "Fetch live Google organic search results for 1-10 keywords. Use this to inspect who ranks for a query, verify competitors, compare SERPs across keywords, or gather source URLs before content planning. Returns the top `depth` result rows per keyword (default 20). Charges credits per keyword: ~5 each at the default depth 20, and each additional 10 of depth adds ~2.5. Does not save results to OpenSEO. Per-keyword errors don't fail the batch.",
     inputSchema,
     outputSchema: z.looseObject({
       results: z.array(
@@ -84,9 +86,7 @@ export const getSerpResultsTool = {
               items: z.array(
                 z
                   .object({
-                    type: z.string().nullable(),
-                    rankGroup: z.number().nullable(),
-                    rankAbsolute: z.number().nullable(),
+                    type: z.string().nullable().optional(),
                     rank: z.number().nullable(),
                     title: z.string().nullable(),
                     url: z.string().nullable(),
@@ -110,7 +110,7 @@ export const getSerpResultsTool = {
     }),
     annotations: {
       readOnlyHint: false,
-      openWorldHint: false,
+      openWorldHint: true,
       destructiveHint: false,
     },
   },
@@ -120,16 +120,22 @@ export const getSerpResultsTool = {
     const results = await Promise.all(
       args.queries.map(async (q) => {
         try {
+          const market = resolveMarket(q, context.project);
+          if (q.locationName) {
+            await assertLocalResearchLocation(
+              market.locationCode,
+              q.locationName,
+            );
+          }
           const items = await client.serp.live({
             keyword: q.keyword,
-            ...resolveMarket(q, context.project),
+            ...market,
+            locationName: q.locationName,
             depth,
           });
           // Trim noise — return only essentials per item.
           const trimmed = items.slice(0, depth).map((item) => ({
-            type: item.type ?? null,
-            rankGroup: item.rank_group ?? null,
-            rankAbsolute: item.rank_absolute ?? null,
+            type: item.type,
             rank: item.rank_absolute ?? item.rank_group ?? null,
             title: item.title ?? null,
             url: item.url ?? null,
@@ -141,7 +147,7 @@ export const getSerpResultsTool = {
           return {
             keyword: q.keyword,
             ok: false as const,
-            error: error instanceof Error ? error.message : String(error),
+            error: toolErrorMessage(error),
           };
         }
       }),

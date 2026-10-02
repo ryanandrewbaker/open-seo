@@ -107,13 +107,13 @@ function parseTabInput(value: unknown): SearchTabInput | null {
       locationCode:
         typeof value.locationCode === "number" ? value.locationCode : undefined,
       locationName:
-        typeof value.locationName === "string" && value.locationName !== ""
-          ? value.locationName
-          : undefined,
+        typeof value.locationName === "string" ? value.locationName : undefined,
       resultLimit: value.resultLimit,
       mode: value.mode,
       // Tabs persisted before the clickstream toggle existed default to off.
       clickstream: value.clickstream === true,
+      // Tabs persisted before per-search grouping existed default to off.
+      groupKeywords: value.groupKeywords === true,
     };
   }
 

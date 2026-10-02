@@ -11,6 +11,7 @@ type KeywordSearchParams = {
   kLimit?: ResultLimit;
   mode?: KeywordMode;
   cs?: boolean;
+  grp?: boolean;
   sort?: SortField;
   order?: SortDir;
   minVol?: string;
@@ -35,6 +36,7 @@ export function normalizeLegacyKeywordSearch(search: KeywordSearchParams): {
     kLimit: search.kLimit === 150 ? undefined : search.kLimit,
     mode: search.mode === "auto" ? undefined : search.mode,
     cs: search.cs === true ? true : undefined,
+    grp: search.grp === true ? true : undefined,
     sort: search.sort === "searchVolume" ? undefined : search.sort,
     order: search.order === "desc" ? undefined : search.order,
     minVol: undefined,
@@ -54,6 +56,7 @@ export function normalizeLegacyKeywordSearch(search: KeywordSearchParams): {
     "kLimit",
     "mode",
     "cs",
+    "grp",
     "sort",
     "order",
     "minVol",
