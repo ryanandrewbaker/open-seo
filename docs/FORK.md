@@ -36,10 +36,10 @@ Upstream areas brought in include v0.1.10 and later: shadcn/UI migration and Dai
 
 Migrations incorporated (names and order unchanged):
 
-| Engine | Files |
-| --- | --- |
+| Engine      | Files                                                                                                                                              |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | D1 / SQLite | `drizzle/sqlite/0048_graceful_white_queen.sql` (crawler credentials), `0049_keyword_step.sql`, `0050_famous_crystal.sql` (Google grant uniqueness) |
-| Postgres | `drizzle/pg/0026_minor_dreadnoughts.sql`, `0027_keyword_step.sql`, `0028_modern_nekra.sql` |
+| Postgres    | `drizzle/pg/0026_minor_dreadnoughts.sql`, `0027_keyword_step.sql`, `0028_modern_nekra.sql`                                                         |
 
 Deleted from the fork because upstream replaced them:
 
@@ -133,10 +133,10 @@ These files already carry the remaining fork behaviour and change often upstream
 
 OpenSEO ships two schemas. Fork migrations must too.
 
-| Engine      | Schema                    | Migrations           | Generate              |
-| ----------- | ------------------------- | -------------------- | --------------------- |
-| D1 / SQLite | `src/db/app.schema.ts`    | `drizzle/sqlite/`    | `pnpm db:generate:d1` |
-| Postgres    | `src/db/pg/app.schema.ts` | `drizzle/pg/`        | `pnpm db:generate:pg` |
+| Engine      | Schema                    | Migrations        | Generate              |
+| ----------- | ------------------------- | ----------------- | --------------------- |
+| D1 / SQLite | `src/db/app.schema.ts`    | `drizzle/sqlite/` | `pnpm db:generate:d1` |
+| Postgres    | `src/db/pg/app.schema.ts` | `drizzle/pg/`     | `pnpm db:generate:pg` |
 
 `pnpm db:generate` runs both. Commit both SQL files together.
 
