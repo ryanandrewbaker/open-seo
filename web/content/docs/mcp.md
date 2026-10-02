@@ -118,8 +118,7 @@ Any other client that supports custom HTTP headers can send `Authorization: Bear
 OpenSEO MCP exposes tools for SEO research workflows:
 
 - Research keywords with volume, difficulty, and CPC.
-- Fetch live Google SERP results for keywords (mixed result types; inspect type and rank fields). Optional `depth` (10–100, default 20) loads deeper ranks on demand.
-- Resolve a place name and country to a canonical DataForSEO location before local SERP or keyword calls. Use `locationName` for city targeting; keep the country `locationCode`.
+- Fetch live Google SERP results for keywords. Items include `type`, `rankGroup`, `rankAbsolute`, and `rank`.
 - Find exact keyword, page, rank, volume, CPC, intent, and traffic rows for a domain or page.
 - Compare SERP competitors across a supplied keyword set.
 - Search local businesses near a coordinate, filtering by rating, review count, or claimed status.
@@ -128,7 +127,7 @@ OpenSEO MCP exposes tools for SEO research workflows:
 - Collect Google reviews (including reviews from other sites) and Google Business posts.
 - Look up valid Google Business category slugs.
 - Check Google Maps rank at each point of a grid around a business.
-- Hydrate keywords with search volume, difficulty, intent, CPC, and trends.
+- Hydrate keywords with search volume, difficulty, intent, CPC, and trends. Optional `locationName` returns local Google Ads volume and `volume_scope` `local` or `national`.
 - List saved keywords from an OpenSEO project.
 - Save useful keywords back to OpenSEO.
 - Read rank tracker configs and latest keyword positions.
@@ -138,7 +137,7 @@ OpenSEO MCP exposes tools for SEO research workflows:
 - Read first-party Google Search Console performance (clicks, impressions, CTR, position).
 - Inspect index status, crawl, and canonical for specific URLs (up to 10 per call).
 - Read and update a project's shared context: business, goal, positioning, writing preferences, competitors, key pages, and a research log (free, no credits).
-- Save and read HTML reports on a project (free, no credits).
+- Save and read HTML reports on a project (free, no credits). New reports are private. On hosted OpenSEO, explicitly ask the agent to publish with `set_report_sharing` (`public: true`) or revoke the link (`public: false`). `get_report` returns `report.shareUrl` for an existing public link, or `null` when unavailable.
 - List a project's report templates, and save a reusable report brief to the project (free, no credits).
 
 ## What to do after setup

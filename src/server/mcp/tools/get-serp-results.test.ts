@@ -5,6 +5,7 @@ import { makeToolContext, textContent } from "./tool-test-support";
 const mocks = vi.hoisted(() => ({
   getProjectForOrganization: vi.fn(),
   createDataforseoClient: vi.fn(),
+  fetchSerpLocationsForCountry: vi.fn(),
 }));
 
 vi.mock("cloudflare:workers", () => ({ env: {} }));
@@ -17,8 +18,12 @@ vi.mock("@/server/features/projects/services/ProjectService", () => ({
     getProjectForOrganization: mocks.getProjectForOrganization,
   },
 }));
+vi.mock("@/server/lib/dataforseo/serp-locations", () => ({
+  fetchSerpLocationsForCountry: mocks.fetchSerpLocationsForCountry,
+}));
 
 const toolContext = makeToolContext();
+const ararat = "Ararat,Victoria,Australia";
 
 function okItems(result: {
   structuredContent?: { results?: Array<{ ok?: boolean; items?: unknown[] }> };
@@ -30,16 +35,24 @@ function okItems(result: {
   return first.items ?? [];
 }
 
-describe("get_serp_results MCP evidence", () => {
+describe("get_serp_results rank evidence", () => {
   beforeEach(() => {
     mocks.getProjectForOrganization.mockResolvedValue({
       id: "project_1",
-      locationCode: 2840,
+      locationCode: 2036,
       languageCode: "en",
     });
+    mocks.fetchSerpLocationsForCountry.mockResolvedValue([
+      {
+        locationName: ararat,
+        locationCode: 1007235,
+        locationType: "City",
+        displayLabel: "Ararat, Victoria, Australia",
+      },
+    ]);
   });
 
-  it("preserves type, rankGroup, and rankAbsolute for organic items", async () => {
+  it("keeps organic and non-organic types distinguishable with both rank fields", async () => {
     const live = vi.fn().mockResolvedValue([
       {
         type: "organic",
@@ -50,11 +63,20 @@ describe("get_serp_results MCP evidence", () => {
         url: "https://example.com/",
         description: "An organic result",
       },
+      {
+        type: "local_pack",
+        rank_group: 1,
+        rank_absolute: 3,
+        domain: "maps.google.com",
+        title: "Local pack listing",
+        url: "https://maps.google.com/?cid=1",
+        description: null,
+      },
     ]);
     mocks.createDataforseoClient.mockReturnValue({ serp: { live } });
 
     const result = await getSerpResultsTool.handler(
-      { projectId: "project_1", queries: [{ keyword: "seo tools" }] },
+      { projectId: "project_1", queries: [{ keyword: "newborn photos" }] },
       toolContext,
     );
 
@@ -69,106 +91,53 @@ describe("get_serp_results MCP evidence", () => {
         url: "https://example.com/",
         description: "An organic result",
       },
-    ]);
-  });
-
-  it("preserves a non-organic SERP type instead of relabelling it organic", async () => {
-    const live = vi.fn().mockResolvedValue([
       {
         type: "local_pack",
-        rank_group: 1,
-        rank_absolute: 3,
+        rankGroup: 1,
+        rankAbsolute: 3,
+        rank: 3,
         domain: "maps.google.com",
         title: "Local pack listing",
         url: "https://maps.google.com/?cid=1",
         description: null,
       },
     ]);
-    mocks.createDataforseoClient.mockReturnValue({ serp: { live } });
-
-    const result = await getSerpResultsTool.handler(
-      { projectId: "project_1", queries: [{ keyword: "newborn photos" }] },
-      toolContext,
+    const out = textContent(result);
+    expect(out).toContain(
+      "type | rank_group | rank_absolute | rank | domain | title | url",
     );
-
-    const [item] = okItems(result);
-    expect(item).toMatchObject({
-      type: "local_pack",
-      rankGroup: 1,
-      rankAbsolute: 3,
-      rank: 3,
-    });
-    expect(item).not.toMatchObject({ type: "organic" });
+    expect(out).toContain("organic | 2 | 5 | 5 | example.com");
+    expect(out).toContain("local_pack | 1 | 3 | 3");
   });
 
-  it("exposes type and both rank fields in the text table", async () => {
+  it("falls back to rankGroup when rankAbsolute is missing", async () => {
     const live = vi.fn().mockResolvedValue([
       {
         type: "organic",
-        rank_group: 2,
-        rank_absolute: 5,
+        rank_group: 4,
         domain: "example.com",
         title: "Example",
         url: "https://example.com/",
-        description: "desc",
-      },
-      {
-        type: "local_pack",
-        rank_group: 1,
-        rank_absolute: 3,
-        domain: "maps.google.com",
-        title: "Local pack listing",
-        url: "https://maps.google.com/?cid=1",
-        description: null,
       },
     ]);
     mocks.createDataforseoClient.mockReturnValue({ serp: { live } });
 
     const result = await getSerpResultsTool.handler(
-      { projectId: "project_1", queries: [{ keyword: "newborn photos" }] },
+      { projectId: "project_1", queries: [{ keyword: "seo tools" }] },
       toolContext,
     );
 
-    const out = textContent(result);
-    expect(out).toContain(
-      "type | rank_group | rank_absolute | domain | title | url",
-    );
-    expect(out).not.toMatch(/^rank \| domain \| title \| url$/m);
-    expect(out).toContain(
-      "organic | 2 | 5 | example.com | Example | https://example.com/",
-    );
-    expect(out).toContain("local_pack | 1 | 3");
-  });
-
-  it("does not invent a type when DataForSEO omits one", async () => {
-    const live = vi.fn().mockResolvedValue([
-      {
-        rank_group: 1,
-        rank_absolute: 1,
-        domain: "example.com",
-        title: "Unknown block",
-        url: "https://example.com/unknown",
-      },
-    ]);
-    mocks.createDataforseoClient.mockReturnValue({ serp: { live } });
-
-    const result = await getSerpResultsTool.handler(
-      { projectId: "project_1", queries: [{ keyword: "mystery" }] },
-      toolContext,
-    );
-
-    const [item] = okItems(result);
-    expect(item).toMatchObject({ type: null, rankGroup: 1, rankAbsolute: 1 });
+    expect(okItems(result)[0]).toMatchObject({
+      type: "organic",
+      rankGroup: 4,
+      rankAbsolute: null,
+      rank: 4,
+    });
   });
 
   it("passes a canonical locationName through to live SERP without replacing the country", async () => {
     const live = vi.fn().mockResolvedValue([]);
     mocks.createDataforseoClient.mockReturnValue({ serp: { live } });
-    mocks.getProjectForOrganization.mockResolvedValue({
-      id: "project_1",
-      locationCode: 2036,
-      languageCode: "en",
-    });
 
     await getSerpResultsTool.handler(
       {
@@ -177,39 +146,7 @@ describe("get_serp_results MCP evidence", () => {
           {
             keyword: "newborn photographer",
             locationCode: 2036,
-            locationName: "Ararat,Victoria,Australia",
-          },
-        ],
-      },
-      toolContext,
-    );
-
-    expect(live).toHaveBeenCalledWith({
-      keyword: "newborn photographer",
-      locationCode: 2036,
-      languageCode: "en",
-      locationName: "Ararat,Victoria,Australia",
-      depth: 20,
-    });
-  });
-
-  it("keeps locationName when crawling a deeper SERP", async () => {
-    const live = vi.fn().mockResolvedValue([]);
-    mocks.createDataforseoClient.mockReturnValue({ serp: { live } });
-    mocks.getProjectForOrganization.mockResolvedValue({
-      id: "project_1",
-      locationCode: 2036,
-      languageCode: "en",
-    });
-
-    await getSerpResultsTool.handler(
-      {
-        projectId: "project_1",
-        queries: [
-          {
-            keyword: "newborn photographer",
-            locationCode: 2036,
-            locationName: "Melbourne,Victoria,Australia",
+            locationName: ararat,
           },
         ],
         depth: 100,
@@ -221,7 +158,7 @@ describe("get_serp_results MCP evidence", () => {
       keyword: "newborn photographer",
       locationCode: 2036,
       languageCode: "en",
-      locationName: "Melbourne,Victoria,Australia",
+      locationName: ararat,
       depth: 100,
     });
   });

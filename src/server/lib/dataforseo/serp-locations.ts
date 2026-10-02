@@ -46,9 +46,6 @@ function cacheKey(iso: string): string {
   return `serp-locations:${iso}`;
 }
 
-/** Cap MCP and UI location search so a country list never streams raw. */
-export const SERP_LOCATION_SEARCH_LIMIT = 10;
-
 /**
  * Full sub-country location list for one country. `countryCode` is ISO
  * 3166-1 alpha-2 ("us", "gb") — the endpoint rejects country *names* with a

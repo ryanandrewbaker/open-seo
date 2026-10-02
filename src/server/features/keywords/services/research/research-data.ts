@@ -19,6 +19,7 @@ type FetchResearchRowsParams = {
   resultLimit: number;
   source: KeywordSource;
   includeClickstreamData?: boolean;
+  ignoreSynonyms?: boolean;
   // Attribute the DataForSEO spend to a specific feature (e.g. "agent");
   // defaults to the path-derived feature when omitted.
   creditFeature?: CreditFeature;
@@ -55,7 +56,6 @@ function mapKeywordDataItems(items: LabsKeywordDataItem[]): EnrichedKeyword[] {
       competition: item.keyword_info?.competition ?? null,
       keywordDifficulty: item.keyword_properties?.keyword_difficulty ?? null,
       intent: normalizeIntent(item.search_intent_info?.main_intent),
-      volumeScope: "national",
     });
   }
 
@@ -93,7 +93,6 @@ export function mapAdsKeywordItems(
         item.competition_index != null ? item.competition_index / 100 : null,
       keywordDifficulty: null,
       intent: "unknown",
-      volumeScope: "national",
     });
   }
 
@@ -128,6 +127,7 @@ async function fetchRelatedRows(
     limit: params.resultLimit,
     depth: 3,
     includeClickstreamData: params.includeClickstreamData,
+    ignoreSynonyms: params.ignoreSynonyms,
     creditFeature: params.creditFeature,
   });
 
@@ -158,6 +158,7 @@ export async function fetchResearchRowsBySource(
         languageCode: params.languageCode,
         limit: params.resultLimit,
         includeClickstreamData: params.includeClickstreamData,
+        ignoreSynonyms: params.ignoreSynonyms,
         creditFeature: params.creditFeature,
       }),
     );
@@ -170,6 +171,7 @@ export async function fetchResearchRowsBySource(
       languageCode: params.languageCode,
       limit: params.resultLimit,
       includeClickstreamData: params.includeClickstreamData,
+      ignoreSynonyms: params.ignoreSynonyms,
       creditFeature: params.creditFeature,
     }),
   );

@@ -9,6 +9,7 @@ import { z } from "zod";
 import type { BillingCustomerContext } from "@/server/billing/subscription";
 import { createDataforseoClient } from "@/server/lib/dataforseo";
 import { normalizeKeyword } from "./helpers";
+import { assertLocalResearchLocation } from "./local-volume";
 
 const SERP_CACHE_TTL_SECONDS = 12 * 60 * 60;
 
@@ -70,13 +71,16 @@ async function getSerpLiveAnalysis(
     keyword: string;
     locationCode: number;
     languageCode: string;
-    locationName?: string;
     depth: number;
+    locationName?: string;
   },
   billingCustomer: BillingCustomerContext,
 ): Promise<SerpAnalysisResult> {
   const keyword = normalizeKeyword(input.keyword);
   const { depth } = input;
+  if (input.locationName) {
+    await assertLocalResearchLocation(input.locationCode, input.locationName);
+  }
 
   const cacheKey = await buildCacheKey("serp:analysis", {
     organizationId: billingCustomer.organizationId,
@@ -84,7 +88,7 @@ async function getSerpLiveAnalysis(
     keyword,
     locationCode: input.locationCode,
     languageCode: input.languageCode,
-    locationName: input.locationName ?? null,
+    locationName: input.locationName,
   });
 
   // Depth lives in the cached value, not the key: DataForSEO has no offset, so

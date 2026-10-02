@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/server/lib/runtime-env", () => ({
   getRequiredEnvValue: vi.fn(async () => "test-api-key"),
@@ -53,51 +53,9 @@ describe("live SERP", () => {
       billing: { costUsd: 0.002 },
     });
   });
-
-  it("sends location_name for a local target instead of country location_code", async () => {
-    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
-      Response.json({
-        status_code: 20000,
-        tasks: [
-          {
-            status_code: 20000,
-            status_message: "Ok.",
-            path: ["v3", "serp", "google", "organic", "live", "advanced"],
-            cost: 0.002,
-            result_count: 1,
-            result: [{ items: [] }],
-          },
-        ],
-      }),
-    );
-    vi.stubGlobal("fetch", fetchMock);
-
-    await fetchLiveSerp({
-      keyword: "newborn photographer",
-      locationCode: 2036,
-      languageCode: "en",
-      locationName: "Ararat,Victoria,Australia",
-      depth: 20,
-    });
-
-    expect(parseDataforseoRequestBody(fetchMock.mock.calls[0]?.[1])).toEqual([
-      {
-        keyword: "newborn photographer",
-        location_name: "Ararat,Victoria,Australia",
-        language_code: "en",
-        device: "desktop",
-        os: "windows",
-        depth: 20,
-      },
-    ]);
-  });
 });
 
 describe("rank check task queue", () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it("posts queued tasks, maps ids by tag, and sums cost over all entries", async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       Response.json({

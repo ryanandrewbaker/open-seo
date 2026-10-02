@@ -16,7 +16,7 @@ const SERP_DEEP_DEPTH = 100;
 export function useKeywordSerpAnalysis(
   projectId: string,
   locationCode: number | undefined,
-  locationName?: string,
+  locationName: string | undefined,
 ) {
   const [serpKeyword, setSerpKeywordState] = useState<string | null>(null);
   const [serpPage, setSerpPageState] = useState(0);
@@ -25,14 +25,13 @@ export function useKeywordSerpAnalysis(
   );
 
   // Everything but the depth identifies the snapshot; the depth decides how
-  // deep it goes. locationName keeps Ararat, Melbourne, and country-only
-  // requests on separate cache paths.
+  // deep it goes.
   const snapshotKey = [
     "serpAnalysis",
     projectId,
     serpKeyword,
     locationCode,
-    locationName ?? null,
+    locationName,
   ];
 
   const serpQuery = useQuery({
@@ -135,7 +134,6 @@ export function useKeywordSerpAnalysis(
     serpPage: visiblePage,
     setSerpPage,
     SERP_PAGE_SIZE,
-    serpQuery,
     serpResults,
     activeSerpKeyword,
     serpLoading,
@@ -143,5 +141,7 @@ export function useKeywordSerpAnalysis(
     canLoadMoreSerp,
     deepFetchFailed,
     serpError,
+    // `isLoading` stays false while a failed query refetches.
+    serpRetrying: serpQuery.isFetching,
   };
 }

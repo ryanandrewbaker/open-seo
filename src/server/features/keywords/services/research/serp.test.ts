@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import type { BillingCustomerContext } from "@/server/billing/subscription";
 
 const mocks = vi.hoisted(() => ({
+  assertLocalResearchLocation: vi.fn(async () => {}),
+  buildCacheKey: vi.fn(async () => "serp:analysis:key"),
   createDataforseoClient: vi.fn(),
   getCached: vi.fn(),
   setCached: vi.fn(async () => {}),
@@ -10,9 +12,13 @@ const mocks = vi.hoisted(() => ({
 vi.mock("cloudflare:workers", () => ({ waitUntil: vi.fn() }));
 
 vi.mock("@/server/lib/r2-cache", () => ({
-  buildCacheKey: vi.fn(async () => "serp:analysis:key"),
+  buildCacheKey: mocks.buildCacheKey,
   getCached: mocks.getCached,
   setCached: mocks.setCached,
+}));
+
+vi.mock("./local-volume", () => ({
+  assertLocalResearchLocation: mocks.assertLocalResearchLocation,
 }));
 
 vi.mock("@/server/lib/dataforseo", () => ({
@@ -122,49 +128,27 @@ describe("getSerpAnalysis cache depth", () => {
     );
   });
 
-  it("forwards a local locationName into live SERP without replacing the country", async () => {
+  it("fetches and caches the SERP for the selected area", async () => {
     mocks.getCached.mockResolvedValue(null);
     const live = mockLiveSerp();
+    const locationName = "Austin,Texas,United States";
 
     await getSerpAnalysis(
-      {
-        ...input,
-        locationCode: 2036,
-        locationName: "Ararat,Victoria,Australia",
-        depth: 20,
-      },
+      { ...input, depth: 20, locationName },
       billingCustomer,
     );
 
-    expect(live).toHaveBeenCalledWith({
-      keyword: "seo tools",
-      locationCode: 2036,
-      languageCode: "en",
-      locationName: "Ararat,Victoria,Australia",
-      depth: 20,
-    });
-  });
-
-  it("keeps locationName when requesting a deeper live SERP", async () => {
-    mocks.getCached.mockResolvedValue(null);
-    const live = mockLiveSerp();
-
-    await getSerpAnalysis(
-      {
-        ...input,
-        locationCode: 2036,
-        locationName: "Melbourne,Victoria,Australia",
-        depth: 100,
-      },
-      billingCustomer,
+    expect(mocks.assertLocalResearchLocation).toHaveBeenCalledWith(
+      2840,
+      locationName,
     );
-
-    expect(live).toHaveBeenCalledWith({
-      keyword: "seo tools",
-      locationCode: 2036,
-      languageCode: "en",
-      locationName: "Melbourne,Victoria,Australia",
-      depth: 100,
-    });
+    expect(live).toHaveBeenCalledWith(
+      expect.objectContaining({ locationName }),
+    );
+    // A national snapshot must never answer a local request.
+    expect(mocks.buildCacheKey).toHaveBeenCalledWith(
+      "serp:analysis",
+      expect.objectContaining({ locationName }),
+    );
   });
 });
